@@ -5,3 +5,4 @@ output.html
 output.pdf
 .DS_Store
 .coverage
+htmlcov/

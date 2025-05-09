@@ -1,0 +1,16 @@
+[run]
+# Ignore compiled files, test code, and virtual environments
+omit =
+    */__pycache__/*
+    */tests/*
+    */.venv/*
+    default-template.html
+
+[report]
+# Don't count typical boilerplate as missed
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+
+[html]
+directory = htmlcov
