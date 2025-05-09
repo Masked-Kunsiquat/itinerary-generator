@@ -76,10 +76,11 @@ def test_render_itinerary(sample_trip_data, sample_days):
         temp.write("{{ trip_name }} - {{ days|length }} days")
         template_path = temp.name
     
+    # Create secure output file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as output_file:
+        output_path = output_file.name
+    
     try:
-        # Create output file path
-        output_path = tempfile.mktemp(suffix='.html')
-        
         # Render the template
         context = create_template_context(sample_trip_data, sample_days)
         html_path = render_itinerary(template_path, context, output_path)
@@ -111,10 +112,11 @@ def test_convert_to_pdf_success(mock_post):
         temp.write("<html><body>Test</body></html>")
         html_path = temp.name
     
+    # Create secure PDF output file
+    with tempfile.NamedTemporaryFile(mode='wb', suffix='.pdf', delete=False) as pdf_file:
+        pdf_path = pdf_file.name
+    
     try:
-        # Create output PDF path
-        pdf_path = tempfile.mktemp(suffix='.pdf')
-        
         # Convert HTML to PDF
         result = convert_to_pdf(html_path, pdf_path, "http://fake-gotenberg")
         
@@ -153,10 +155,11 @@ def test_convert_to_pdf_error(mock_post):
         temp.write("<html><body>Test</body></html>")
         html_path = temp.name
     
+    # Create secure PDF output file
+    with tempfile.NamedTemporaryFile(mode='wb', suffix='.pdf', delete=False) as pdf_file:
+        pdf_path = pdf_file.name
+    
     try:
-        # Create output PDF path
-        pdf_path = tempfile.mktemp(suffix='.pdf')
-        
         # Check that exception is raised
         with pytest.raises(requests.HTTPError, match="Gotenberg failed"):
             convert_to_pdf(html_path, pdf_path, "http://fake-gotenberg")

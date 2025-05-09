@@ -23,7 +23,7 @@ def test_convert_to_pdf_success(mock_post):
         html_path = html_file.name
     
     try:
-        pdf_path = tempfile.mktemp(suffix='.pdf')
+        pdf_path = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False).name
         
         # Call the function
         result = convert_to_pdf(html_path, pdf_path, "http://fake-gotenberg")
@@ -61,7 +61,7 @@ def test_convert_to_pdf_error(mock_post):
         html_path = html_file.name
     
     try:
-        pdf_path = tempfile.mktemp(suffix='.pdf')
+        pdf_path = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False).name
         
         # Test error handling
         with pytest.raises(requests.HTTPError, match="Gotenberg failed"):

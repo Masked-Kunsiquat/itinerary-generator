@@ -22,7 +22,7 @@ run-web:
 	python -m itinerary_generator.web
 
 run-dev:
-	FLASK_ENV=development FLASK_DEBUG=1 python -m itinerary_generator.web
+	FLASK_APP=itinerary_generator.web FLASK_DEBUG=1 python -m flask run --debug
 
 build-docker:
 	docker-compose build

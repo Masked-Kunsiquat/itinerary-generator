@@ -6,7 +6,7 @@ Thank you for considering contributing to the Itinerary Generator!
 
 1. Clone the repository:
    ```
-   git clone https://github.com/MAsked-Kunsiquat/itinerary-generator.git
+   git clone https://github.com/Masked-Kunsiquat/itinerary-generator.git
    cd itinerary-generator
    ```
 

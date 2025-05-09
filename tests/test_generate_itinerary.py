@@ -1,6 +1,4 @@
-import sys
 import os
-import pytest
 import tempfile
 from unittest.mock import patch, MagicMock
 
