@@ -1,6 +1,6 @@
 # 🧳 Surmai Itinerary Generator
 
-A web-based tool for rendering beautiful, print-ready trip itineraries from Surmai's `trip.json` exports using customizable Jinja2 HTML templates. Optionally supports PDF generation using [Gotenberg](https://github.com/gotenberg/gotenberg).
+A web-based tool for rendering beautiful, print-ready trip itineraries from Surmai's `trip.json` exports using customizable Jinja2 + Bootstrap 5 templates. Supports optional PDF generation via [Gotenberg](https://github.com/gotenberg/gotenberg).
 
 ![CI](https://github.com/Masked-Kunsiquat/itinerary-generator/actions/workflows/test.yml/badge.svg)
 
@@ -8,76 +8,122 @@ A web-based tool for rendering beautiful, print-ready trip itineraries from Surm
 
 ## 🧾 About Surmai
 
-This project was inspired by [Surmai](https://github.com/rohitkumbhar/surmai) — an alpha-stage personal/family travel organizer built by [@rohitkumbhar](https://github.com/rohitkumbhar). Surmai aims to:
+This project is inspired by [Surmai](https://github.com/rohitkumbhar/surmai), an alpha-stage travel organizer built by [@rohitkumbhar](https://github.com/rohitkumbhar). Surmai aims to:
 
-* Allow collaborative planning between multiple people
-* Provide easy access to artifacts throughout the trip
-* Keep travel data private
+* Enable collaborative trip planning
+* Provide centralized access to travel artifacts
+* Keep your data private and self-hosted
 
-This tool provides a way to export and beautify Surmai trip plans.
+This tool extends Surmai by providing a polished export and print experience for your finalized trip plan.
 
-> **NOTE:** Surmai is in active development. Please report bugs and suggestions to its [GitHub Issues page](https://github.com/rohitkumbhar/surmai/issues).
+> **Note:** Surmai is actively evolving — report bugs or ideas via its [GitHub Issues page](https://github.com/rohitkumbhar/surmai/issues).
 
 ---
 
 ## ✨ Features
 
-* Upload a Surmai-style `trip.json` export
-* Upload your custom Bootstrap 5+ HTML template (Jinja2-compatible)
-* Automatically uses a default template if none is provided
-* View & download rendered HTML
-* Optionally generate and download a PDF via Gotenberg
-* Includes power-user documentation and downloadable examples
+* Upload a Surmai-style `trip.json`
+* Upload your own Jinja2-compatible HTML template (Bootstrap 5+)
+* Auto-fallback to a default built-in template
+* View and download the rendered itinerary
+* Optionally generate a print-ready PDF via Gotenberg
+* Includes downloadable sample files and power-user documentation
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repo
+### 🐳 Run from Docker Hub
+
+Prefer not to build locally? Use the prebuilt image:
+
+```bash
+docker run --rm -p 5000:5000 maskedkunsiquat/itinerary-generator
+```
+
+> Uses a secure `python:alpine` base image
+> **PDF export requires a running Gotenberg instance**
+
+---
+
+### ⚡ Full Stack with Docker Compose
+
+For HTML + PDF generation:
+
+```yaml
+services:
+  app:
+    image: maskedkunsiquat/itinerary-generator:latest
+    ports:
+      - "5000:5000"
+    depends_on:
+      - gotenberg
+
+  gotenberg:
+    image: gotenberg/gotenberg:7
+    ports:
+      - "3000:3000"
+```
+
+Start it up:
+
+```bash
+docker-compose up -d
+```
+
+Visit: [http://localhost:5000](http://localhost:5000)
+
+---
+
+### 🏷️ Available Image Tags
+
+| Tag      | Description                           |
+| -------- | ------------------------------------- |
+| `latest` | Actively maintained, secure           |
+| `v1.0.1` | Stable, pinned production build       |
+| `v1.0.0` | ⚠️ Deprecated — known vulnerabilities |
+
+---
+
+### 🔧 Build Manually (Optional)
 
 ```bash
 git clone https://github.com/Masked-Kunsiquat/itinerary-generator.git
 cd itinerary-generator
-```
-
-### 2. Run via Docker Compose
-
-```bash
 docker-compose up --build
 ```
 
-Then open your browser and visit: [http://localhost:5000](http://localhost:5000)
+---
+
+## 📁 What to Upload
+
+Required:
+
+* `trip.json` — Surmai trip export
+* `template.html` — (optional) your own Jinja2 + Bootstrap 5 layout
+
+If no template is provided, `default-template.html` is used automatically.
 
 ---
 
-## 📁 Upload Details
+## 🖨️ PDF Export via Gotenberg
 
-You’ll need:
+When "Generate PDF" is checked:
 
-* `trip.json` – from Surmai's export
-* `template.html` – your HTML layout using Jinja2 placeholders like `{{ trip_name }}`, `{% for day in days %}`, etc.
+* The rendered HTML is sent to Gotenberg
+* A downloadable PDF is returned
 
-If no template is uploaded, `default-template.html` will be used.
-
----
-
-## 🖨️ PDF Generation
-
-If "Generate PDF" is checked in the UI:
-
-* The rendered HTML is sent to Gotenberg (via internal Docker)
-* A fully print-ready PDF is returned for download
+All server-side, Gotenberg-compatible output. No client JS required.
 
 ---
 
-## 🧑‍💻 Power User Guide: Theming & Templating
+## 🧑‍💻 Power Users: Templating & Theming
 
-### 🧱 Common Variables
+### 🧱 Common Jinja2 Variables
 
 ```jinja2
 {{ trip_name }}
-{{ start_date }}
-{{ end_date }}
+{{ start_date }} - {{ end_date }}
 {{ trip_notes | safe }}
 
 {% for day in days %}
@@ -87,41 +133,39 @@ If "Generate PDF" is checked in the UI:
 {% endfor %}
 ```
 
-### 🧩 Custom CSS
+### 🎨 Custom CSS
 
-Reference your custom CSS file like so:
+Drop your stylesheet in `/static/custom.css` and reference it:
 
 ```html
 <link rel="stylesheet" href="/static/custom.css">
 ```
 
-Place your `custom.css` inside the `/static` folder before building or serving the app.
+### 🏷️ Semantic Class Hooks
 
-### 🖼️ Reusable Class Names (Semantic Hooks)
+These can be used to theme or extend layouts:
 
-| Class              | Purpose                                              |
-| ------------------ | ---------------------------------------------------- |
-| `.itinerary-day`   | Wraps each day block                                 |
-| `.event-row`       | Each timeline entry (flights, check-ins, activities) |
-| `.lodging-note`    | Subtle banner for current lodging                    |
-| `.summary-section` | Two-column footer section                            |
-
----
-
-## 🧪 Sample Files
-
-To help you get started quickly:
-
-* [`trip.sample.json`](./static/trip.sample.json) — A fictional 5-day trip with transport, lodging, and activities
-* [`template.sample.html`](./static/template.sample.html) — A minimal Jinja2 + Bootstrap 5 template
-
-Both are also downloadable from the UI.
+| Class              | Description                                 |
+| ------------------ | ------------------------------------------- |
+| `.itinerary-day`   | Wraps a single day                          |
+| `.event-row`       | Flight, check-in, or activity rows          |
+| `.lodging-note`    | Light banner for nights with active lodging |
+| `.summary-section` | Footer section with addresses & notes       |
 
 ---
 
-## 🛠 Development Mode
+## 🧪 Sample Files Included
 
-Run without Docker:
+To help you get started:
+
+* [`trip.sample.json`](./static/trip.sample.json) — A fictional 5-day trip
+* [`template.sample.html`](./static/template.sample.html) — Minimal Bootstrap 5 + Jinja2 template
+
+Both are downloadable from the app UI.
+
+---
+
+## 🛠 Developer Setup (No Docker)
 
 ```bash
 python3 -m venv .venv
@@ -132,63 +176,58 @@ python app.py
 
 ---
 
-## 📦 Repo Structure
+## 📦 Project Structure
 
 ```
 .
-├── Dockerfile
-├── docker-compose.yaml
-├── app.py                  # Flask web UI
-├── generate_itinerary.py   # Jinja2 rendering + PDF logic
-├── requirements.txt
-├── default-template.html   # Used if no custom template is uploaded
+├── app.py                  # Flask frontend
+├── generate_itinerary.py   # Logic for Jinja2 + Gotenberg
+├── default-template.html   # Used if no upload provided
 ├── static/
 │   ├── trip.sample.json
 │   ├── template.sample.html
-│   └── (optional custom.css)
+│   └── custom.css          # Optional user theming
 ├── templates/
-│   └── form.html           # Main upload form
-└── .gitignore / .dockerignore
+│   └── form.html           # Upload UI
+├── Dockerfile / docker-compose.yaml
+└── requirements.txt
 ```
 
 ---
 
-## 🔐 Notes
+## 🔐 Technical Notes
 
-* Flask runs in development mode — suitable for local-only use
-* Gotenberg runs inside Docker and communicates via `http://gotenberg:3000`
-* All rendering happens server-side for PDF compatibility
+* Flask runs in development mode by default
+* Gotenberg uses `http://gotenberg:3000` internally (Docker bridge)
+* Rendering is done server-side to ensure PDF consistency
+* No client-side JS needed for templating
 
 ---
 
-## 💡 Future Ideas
-This project was designed for simplicity, but power users or future contributors may want to explore enhancements like:
+## 💡 Future Enhancements
 
-- 🌓 Theme switcher – Optional dark mode toggle (device preference detection was considered)
+Ideas and considerations for future contributors:
 
-- 🔍 Template preview – Show a live HTML preview or thumbnail of selected template
+* 🌗 Dark mode or theme toggling
+* 🧪 Template validation/linting for missing variables
+* 🖼 Live previews of selected templates
+* 💾 Local storage or cache of recent uploads
+* 🧱 Partial-based templating (e.g. `day-card.html`)
+* 📄 Select from multiple saved template styles
+* 🔐 Basic auth or team access controls
 
-- 🖼 UI polish – Add branding, logos, or customizable styles per user/team
+> Pull requests welcome! Or fork it and make it your own ✨
 
-- 🧪 Validation/linting – Warn users if uploaded templates are missing expected variables
-
-- 💾 Local storage/cache – Persist previously used templates or inputs for convenience
-
-- 🧱 Component-based templating – Support reusable partials or layout variants (e.g. day-card.html)
-
-- 📄 Multiple templates – Let users pick from predefined themes/styles
-
-- 🔐 Authentication – Useful for team deployments or protecting sensitive trip data
-
-> Contributions welcome! Or fork this and make it your own ✨
 ---
+
 ## 📄 License
 
-MIT — free to use and adapt. Attribution welcome.
+MIT — Free to use, modify, and adapt.
 
 ---
 
-## 🙋‍♂️ Author
+## 👤 Author
 
-Built by **Masked-Kunsiquat** (with help from ChatGPT).
-Inspired by the goals of the [Surmai](https://github.com/rohitkumbhar/surmai) project.
+Created by **Masked-Kunsiquat**
+Layout inspired by Pinegrow mockups and powered by ChatGPT
+Originally built for Surmai trip exports
