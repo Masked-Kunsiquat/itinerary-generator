@@ -46,6 +46,19 @@ def get_transport_icon(transport_type):
     return icons.get(transport_type.lower(), "🚗")
 
 
+def format_time(dt):
+    """
+    Format a datetime in a Windows-compatible way with no leading zeros.
+    
+    Args:
+        dt (datetime): Datetime object to format
+        
+    Returns:
+        str: Formatted time string (e.g., "9:30 AM" instead of "09:30 AM")
+    """
+    return dt.strftime('%I:%M %p').lstrip('0')
+
+
 def format_lodging_events(days, lodgings, tz):
     """
     Format and insert lodging check-in/out events and day banners.
@@ -63,9 +76,13 @@ def format_lodging_events(days, lodgings, tz):
         checkin_local = checkin.astimezone(tz)
         checkout_local = checkout.astimezone(tz)
         
+        # Format times in a Windows-compatible way
+        checkin_time = format_time(checkin_local)
+        checkout_time = format_time(checkout_local)
+        
         # Add check-in and check-out events
-        insert_event(days, checkin, tz, f"🛏 {checkin_local.strftime('%-I:%M %p')} — Check-In at {name}")
-        insert_event(days, checkout, tz, f"🛏 {checkout_local.strftime('%-I:%M %p')} — Check-Out from {name}")
+        insert_event(days, checkin, tz, f"🛏 {checkin_time} — Check-In at {name}")
+        insert_event(days, checkout, tz, f"🛏 {checkout_time} — Check-Out from {name}")
 
         # Add lodging banners for nights at this lodging
         for day in days:
@@ -94,9 +111,14 @@ def format_transport_events(days, transportations, tz):
         # Add extra info for multi-day transportation
         extra = ""
         if departure.date() != arrival.date():
-            extra = f"(arrives {arr_local.strftime('%-I:%M %p, %b %d')} — local time)"
-            
-        label = f"{icon} {dep_local.strftime('%-I:%M %p')} — {transport['type'].title()} from {transport['origin']} to {transport['destination']} {extra}"
+            # Format arrival time in a Windows-compatible way
+            arr_time = format_time(arr_local)
+            arr_date = arr_local.strftime('%b %d')
+            extra = f"(arrives {arr_time}, {arr_date} — local time)"
+        
+        # Format departure time in a Windows-compatible way
+        dep_time = format_time(dep_local)
+        label = f"{icon} {dep_time} — {transport['type'].title()} from {transport['origin']} to {transport['destination']} {extra}"
         
         insert_event(days, departure, tz, label)
 
@@ -119,7 +141,10 @@ def format_activity_events(days, activities, tz):
         address = activity.get("address", "")
         
         icon = "🎟️"
-        label = f"{icon} {start_time.astimezone(tz).strftime('%-I:%M %p')} — {name}"
+        
+        # Format time in a Windows-compatible way
+        local_time = format_time(start_time.astimezone(tz))
+        label = f"{icon} {local_time} — {name}"
         
         if address and address.lower() != "n/a" and address.strip():
             label += f" @ {address}"
