@@ -78,3 +78,60 @@ def test_homepage_loads(client):
     response = client.get("/")
     assert response.status_code == 200
     assert b"Generate Trip Itinerary" in response.data
+
+import tempfile
+from unittest.mock import patch, MagicMock
+from generate_itinerary import (
+    get_trip_timezone,
+    convert_to_pdf,
+    generate_itinerary,
+)
+
+def test_get_trip_timezone_fallback():
+    assert get_trip_timezone({"destinations": []}) == "UTC"
+    assert get_trip_timezone({"destinations": [{}]}) == "UTC"
+
+def test_malformed_activity_is_skipped():
+    days = build_days(*parse_dates(load_trip_data("static/trip.sample.json")["trip"]))
+    tz = ZoneInfo("America/New_York")
+    data = {
+        "trip": {
+            "startDate": "2025-05-10T00:00:00Z",
+            "endDate": "2025-05-15T00:00:00Z",
+            "destinations": [],
+            "name": "Test Trip"
+        },
+        "activities": [{}]  # malformed: missing startDate
+    }
+    populate_days(days, data, tz)
+    assert all("🎟️" not in label for day in days for _, label in day["events"])
+
+@patch("generate_itinerary.requests.post")
+def test_convert_to_pdf_success(mock_post, tmp_path):
+    # mock response
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.content = b"%PDF dummy content"
+    mock_post.return_value = mock_response
+
+    html_path = tmp_path / "sample.html"
+    pdf_path = tmp_path / "output.pdf"
+
+    html_path.write_text("<html><body>Test</body></html>")
+
+    convert_to_pdf(str(html_path), str(pdf_path), "http://fake-gotenberg")
+
+    assert pdf_path.exists()
+    assert pdf_path.read_bytes().startswith(b"%PDF")
+
+@patch("generate_itinerary.convert_to_pdf")
+def test_generate_itinerary_runs_without_pdf(mock_convert, tmp_path):
+    output_file = tmp_path / "itinerary.html"
+    generate_itinerary(
+        json_path="static/trip.sample.json",
+        template_path="default-template.html",
+        output_html=str(output_file)
+    )
+    assert output_file.exists()
+    html = output_file.read_text()
+    assert "<html" in html.lower()
