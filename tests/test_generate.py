@@ -15,6 +15,8 @@ from generate_itinerary import (
     render_itinerary,
 )
 
+import requests
+
 
 @pytest.fixture
 def trip_data():
@@ -135,3 +137,36 @@ def test_generate_itinerary_runs_without_pdf(mock_convert, tmp_path):
     assert output_file.exists()
     html = output_file.read_text()
     assert "<html" in html.lower()
+
+@patch("generate_itinerary.requests.post")
+def test_convert_to_pdf_raises_on_error(mock_post, tmp_path):
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.raise_for_status.side_effect = requests.HTTPError("Gotenberg failed")
+    mock_post.return_value = mock_response
+
+    html_path = tmp_path / "fail.html"
+    pdf_path = tmp_path / "fail.pdf"
+    html_path.write_text("<html><body>Error</body></html>")
+
+    with pytest.raises(requests.HTTPError, match="Gotenberg failed"):
+        convert_to_pdf(str(html_path), str(pdf_path), "http://fake-gotenberg")
+
+def test_main_cli_with_pdf(monkeypatch, tmp_path):
+    output_html = tmp_path / "trip.html"
+    output_pdf = tmp_path / "trip.pdf"
+
+    monkeypatch.setattr(sys, "argv", [
+        "generate_itinerary.py",
+        "static/trip.sample.json",
+        "default-template.html",
+        str(output_html),
+        "--pdf", str(output_pdf),
+        "--gotenberg-url", "http://fake-gotenberg"
+    ])
+
+    with patch("generate_itinerary.convert_to_pdf") as mock_pdf:
+        mock_pdf.return_value = None  # Don't actually run it
+        from generate_itinerary import main
+        main()
+        assert output_html.exists()
