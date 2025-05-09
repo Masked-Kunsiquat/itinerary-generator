@@ -15,9 +15,18 @@ def load_trip_data(path):
         
     Returns:
         dict: Parsed trip data
+        
+    Raises:
+        FileNotFoundError: If the specified file does not exist
+        json.JSONDecodeError: If the file contains invalid JSON
     """
-    with open(path, "r") as f:
-        return json.load(f)
+    try:
+        with open(path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Trip data file not found: {path}")
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"Invalid JSON in trip data file: {e.msg}", e.doc, e.pos)
 
 
 def get_trip_timezone(trip):
@@ -30,7 +39,15 @@ def get_trip_timezone(trip):
     Returns:
         str: Timezone string (e.g., 'America/New_York') or 'UTC'
     """
-    return trip["destinations"][0].get("timezone", "UTC") if trip["destinations"] else "UTC"
+    try:
+        if not trip.get("destinations"):
+            return "UTC"
+        
+        timezone = trip["destinations"][0].get("timezone")
+        return timezone if timezone else "UTC"
+    except (IndexError, KeyError, TypeError):
+        # Fallback to UTC in case of any issues with the data structure
+        return "UTC"
 
 
 def parse_dates(trip):
@@ -42,10 +59,21 @@ def parse_dates(trip):
         
     Returns:
         tuple: (start_date, end_date) as datetime objects with timezone info
+        
+    Raises:
+        KeyError: If required date fields are missing
+        ValueError: If dates are in an invalid format
     """
-    start = datetime.fromisoformat(trip["startDate"].replace("Z", "+00:00"))
-    end = datetime.fromisoformat(trip["endDate"].replace("Z", "+00:00"))
-    return start, end
+    try:
+        start = datetime.fromisoformat(trip["startDate"].replace("Z", "+00:00"))
+        end = datetime.fromisoformat(trip["endDate"].replace("Z", "+00:00"))
+        return start, end
+    except KeyError as e:
+        # Specific error for missing required fields
+        raise KeyError(f"Trip data missing required date field: {e}")
+    except ValueError as e:
+        # Handle date parsing errors
+        raise ValueError(f"Invalid date format in trip data: {e}")
 
 
 def build_days(start_date, end_date):
@@ -59,6 +87,9 @@ def build_days(start_date, end_date):
     Returns:
         list: List of day dictionaries, each with date, events, and lodging_banner
     """
+    if end_date < start_date:
+        raise ValueError("End date cannot be before start date")
+        
     days = []
     for i in range((end_date - start_date).days + 1):
         current = start_date + timedelta(days=i)
