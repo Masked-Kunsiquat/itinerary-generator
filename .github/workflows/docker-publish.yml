@@ -24,8 +24,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract tag or default to latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
         id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: maskedkunsiquat/itinerary-generator
+
+      - name: Extract tag or default to latest
+        id: version
         run: |
           VERSION="${GITHUB_REF##*/}"
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
@@ -34,11 +43,14 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and push image
-        uses: docker/build-push-action@v5
+      - name: Build and push image (with SBOM and provenance)
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          sbom: true
+          provenance: mode=max
           tags: |
             maskedkunsiquat/itinerary-generator:latest
-            maskedkunsiquat/itinerary-generator:${{ steps.meta.outputs.tag }}
+            maskedkunsiquat/itinerary-generator:${{ steps.version.outputs.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
