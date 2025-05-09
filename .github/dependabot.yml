@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"  # where requirements-dev.txt lives
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "⬆️ pip"
+    allow:
+      - dependency-type: "all"
+
+  - package-ecosystem: "docker"
+    directory: "/"  # where Dockerfile lives
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "⬆️ docker"
