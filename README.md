@@ -33,6 +33,16 @@ This tool extends Surmai by providing a polished export and print experience for
 
 ---
 
+## Screenshots
+
+### UI Preview
+![UI Screenshot](docs/ui-screenshot.png)
+
+### Exported HTML/PDF
+![Exported Itinerary Screenshot](docs/export-screenshot.png)
+
+---
+
 ## 🚀 Quick Start
 
 ### 🐳 Run from Docker Hub
