@@ -69,3 +69,17 @@ def test_generate_main_failure(monkeypatch, client):
 
     assert response.status_code == 500
     assert b"An internal error occurred" in response.data
+
+def test_post_with_custom_template(monkeypatch, client):
+    monkeypatch.setattr(app_module, "generate_main", lambda: None)
+    monkeypatch.setattr(app_module, "send_file", lambda path, **kwargs: ("MOCKED_PATH", 200, {}))
+
+    trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
+    template_data = b"<html><body>{{ trip_name }}</body></html>"
+
+    response = client.post('/', data={
+        'trip_json': (BytesIO(trip_data), 'trip.json'),
+        'template_html': (BytesIO(template_data), 'custom_template.html'),
+    }, content_type='multipart/form-data')
+
+    assert response.status_code == 200 or isinstance(response, tuple)
