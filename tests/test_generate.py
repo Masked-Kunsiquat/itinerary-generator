@@ -9,6 +9,7 @@ from generate_itinerary import (
     parse_dates,
     build_days,
     populate_days,
+    render_itinerary,
 )
 
 @pytest.fixture
@@ -36,3 +37,30 @@ def test_build_days_and_populate(trip_data):
     assert len(days) == 6  # 6 days total
     assert any("Check-In" in label for _, label in days[0]["events"])
     assert any("🎟️" in label for d in days for _, label in d["events"])  # At least one activity
+
+def test_render_itinerary(tmp_path, trip_data):
+    from zoneinfo import ZoneInfo
+    start, end = parse_dates(trip_data["trip"])
+    tz = ZoneInfo("America/New_York")
+    days = build_days(start, end)
+    populate_days(days, trip_data, tz)
+
+    context = {
+        "trip_name": trip_data["trip"]["name"],
+        "start_date": start.strftime("%b %d, %Y"),
+        "end_date": end.strftime("%b %d, %Y"),
+        "days": days,
+        "trip_notes": trip_data["trip"].get("notes", ""),
+        "lodgings": trip_data.get("lodgings", []),
+        "transportations": trip_data.get("transportations", [])
+    }
+
+    output_file = tmp_path / "rendered.html"
+    html_path = render_itinerary("default-template.html", context, str(output_file))
+
+    assert os.path.exists(html_path)
+    with open(html_path) as f:
+        html = f.read()
+        assert "Sample Adventure" in html
+        assert "Check-In" in html or "Check-Out" in html
+        assert "<html" in html.lower()
