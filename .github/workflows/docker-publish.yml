@@ -9,10 +9,10 @@ on:
     paths:
       - 'Dockerfile'
       - 'docker-compose.yaml'
-      - 'app.py'
-      - 'generate_itinerary.py'
+      - 'itinerary_generator/**/*.py'
+      - 'setup.py'
       - 'requirements*.txt'
-      - '.github/workflows/docker.yml'
+      - '.github/workflows/docker-publish.yml'
 
 jobs:
   docker:
