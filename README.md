@@ -2,6 +2,8 @@
 
 A web-based tool for rendering beautiful, print-ready trip itineraries from Surmai's `trip.json` exports using customizable Jinja2 HTML templates. Optionally supports PDF generation using [Gotenberg](https://github.com/gotenberg/gotenberg).
 
+![CI](https://github.com/Masked-Kunsiquat/itinerary-generator/actions/workflows/test.yml/badge.svg)
+
 ---
 
 ## 🧾 About Surmai
