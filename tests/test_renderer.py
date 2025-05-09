@@ -2,7 +2,7 @@ import sys
 import os
 import pytest
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 import requests
 
@@ -36,7 +36,8 @@ def sample_days():
     
     days = []
     for i in range((end - start).days + 1):
-        current = start.replace(day=start.day + i)
+        # Use timedelta for proper date calculation across month boundaries
+        current = start + timedelta(days=i)
         days.append({
             "date": current,
             "events": [(current.replace(hour=10).time(), "Test Event")],
