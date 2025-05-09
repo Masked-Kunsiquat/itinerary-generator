@@ -2,9 +2,17 @@ name: Build & Push Docker Image
 
 on:
   push:
-    branches: [main]
     tags:
       - 'v*.*.*'
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yaml'
+      - 'app.py'
+      - 'generate_itinerary.py'
+      - 'requirements*.txt'
+      - '.github/workflows/docker.yml'
 
 jobs:
   docker:
