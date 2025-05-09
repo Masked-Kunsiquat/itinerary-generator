@@ -2,10 +2,12 @@ from flask import Flask, request, render_template, send_file, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
 import tempfile
-from generate_itinerary import main as generate_main
 import sys
 import logging
 import traceback
+
+# Import our main generator function instead of using CLI simulation
+from itinerary_generator.generate_itinerary import generate_itinerary
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
@@ -33,21 +35,21 @@ def upload_files():
             template_path = os.path.abspath("default-template.html")
 
         output_html = os.path.join(app.config['UPLOAD_FOLDER'], 'output.html')
-        output_pdf = os.path.join(app.config['UPLOAD_FOLDER'], 'output.pdf')
-
-        # Simulate CLI args for generate_itinerary.py
-        sys.argv = [
-            'generate_itinerary.py',
-            trip_path,
-            template_path,
-            output_html
-        ]
-        if generate_pdf:
-            sys.argv += ['--pdf', output_pdf, '--gotenberg-url', 'http://gotenberg:3000/forms/chromium/convert/html']
+        output_pdf = os.path.join(app.config['UPLOAD_FOLDER'], 'output.pdf') if generate_pdf else None
+        gotenberg_url = 'http://gotenberg:3000/forms/chromium/convert/html' if generate_pdf else None
 
         try:
-            generate_main()
-            return send_file(output_pdf if generate_pdf else output_html, as_attachment=True)
+            # Use the refactored generate_itinerary function directly
+            html_path, pdf_path = generate_itinerary(
+                json_path=trip_path,
+                template_path=template_path,
+                output_html=output_html,
+                pdf_path=output_pdf,
+                gotenberg_url=gotenberg_url
+            )
+            
+            # Return the appropriate file
+            return send_file(pdf_path if generate_pdf else html_path, as_attachment=True)
         except Exception:
             logging.error("Itinerary generation failed:\n%s", traceback.format_exc())
             return "An internal error occurred while generating the itinerary.", 500

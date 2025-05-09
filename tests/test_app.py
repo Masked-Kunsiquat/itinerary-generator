@@ -1,21 +1,23 @@
 import pytest
 from io import BytesIO
 import sys
-sys.path.insert(0, '.')
-import app as app_module
+import os
+from unittest.mock import patch
+
+from itinerary_generator.app import app
 
 
 @pytest.fixture
 def client():
-    app_module.app.config['TESTING'] = True
-    with app_module.app.test_client() as client:
+    app.config['TESTING'] = True
+    with app.test_client() as client:
         yield client
 
 
 def test_get_root(client):
     response = client.get('/')
     assert response.status_code == 200
-    assert b"<form" in response.data  # crude check for rendered form
+    assert b"<form" in response.data
 
 
 def test_post_missing_trip_file(client):
@@ -24,62 +26,76 @@ def test_post_missing_trip_file(client):
     assert b"Missing trip.json" in response.data
 
 
-def test_post_with_trip_json_only(monkeypatch, client):
-    monkeypatch.setattr(app_module, "generate_main", lambda: None)
-    monkeypatch.setattr(app_module, "send_file", lambda path, **kwargs: ("MOCKED_PATH", 200, {}))
+def test_post_with_trip_json_only(client):
+    with patch('itinerary_generator.app.generate_itinerary') as mock_generate, \
+         patch('itinerary_generator.app.send_file', return_value=("MOCKED_PATH", 200, {})) as mock_send:
+        
+        # Set up the mock to return HTML path only
+        mock_generate.return_value = ("output.html", None)
+        
+        trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
 
-    trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
+        response = client.post('/', data={
+            'trip_json': (BytesIO(trip_data), 'trip.json')
+        }, content_type='multipart/form-data')
 
-    response = client.post('/', data={
-        'trip_json': (BytesIO(trip_data), 'trip.json')
-    }, content_type='multipart/form-data')
-
-    assert response.status_code == 200 or isinstance(response, tuple)
-
-
-def test_post_with_pdf_flag(monkeypatch, client):
-    def mock_generate_main():
-        assert '--pdf' in sys.argv
-        assert 'http://gotenberg:3000/forms/chromium/convert/html' in sys.argv
-
-    monkeypatch.setattr(app_module, "generate_main", mock_generate_main)
-    monkeypatch.setattr(app_module, "send_file", lambda path, **kwargs: ("MOCKED_PDF", 200, {}))
-
-    trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
-
-    response = client.post('/', data={
-        'trip_json': (BytesIO(trip_data), 'trip.json'),
-        'generate_pdf': 'on'
-    }, content_type='multipart/form-data')
-
-    assert response.status_code == 200 or isinstance(response, tuple)
+        assert response.status_code == 200
+        mock_generate.assert_called_once()
+        mock_send.assert_called_once()
 
 
-def test_generate_main_failure(monkeypatch, client):
-    def fail():
-        raise RuntimeError("Boom!")
+def test_post_with_pdf_flag(client):
+    with patch('itinerary_generator.app.generate_itinerary') as mock_generate, \
+         patch('itinerary_generator.app.send_file', return_value=("MOCKED_PDF", 200, {})) as mock_send:
+        
+        # Set up the mock to return both HTML and PDF paths
+        mock_generate.return_value = ("output.html", "output.pdf")
 
-    monkeypatch.setattr(app_module, "generate_main", fail)
+        trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
 
-    trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
+        response = client.post('/', data={
+            'trip_json': (BytesIO(trip_data), 'trip.json'),
+            'generate_pdf': 'on'
+        }, content_type='multipart/form-data')
 
-    response = client.post('/', data={
-        'trip_json': (BytesIO(trip_data), 'trip.json')
-    }, content_type='multipart/form-data')
+        assert response.status_code == 200
+        mock_generate.assert_called_once()
+        
+        # Check that we returned the PDF file
+        args, kwargs = mock_send.call_args
+        assert args[0] == "output.pdf"
 
-    assert response.status_code == 500
-    assert b"An internal error occurred" in response.data
 
-def test_post_with_custom_template(monkeypatch, client):
-    monkeypatch.setattr(app_module, "generate_main", lambda: None)
-    monkeypatch.setattr(app_module, "send_file", lambda path, **kwargs: ("MOCKED_PATH", 200, {}))
+def test_generate_main_failure(client):
+    with patch('itinerary_generator.app.generate_itinerary') as mock_generate:
+        # Set up the mock to raise an exception
+        mock_generate.side_effect = RuntimeError("Test Error")
 
-    trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
-    template_data = b"<html><body>{{ trip_name }}</body></html>"
+        trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
 
-    response = client.post('/', data={
-        'trip_json': (BytesIO(trip_data), 'trip.json'),
-        'template_html': (BytesIO(template_data), 'custom_template.html'),
-    }, content_type='multipart/form-data')
+        response = client.post('/', data={
+            'trip_json': (BytesIO(trip_data), 'trip.json')
+        }, content_type='multipart/form-data')
 
-    assert response.status_code == 200 or isinstance(response, tuple)
+        assert response.status_code == 500
+        assert b"An internal error occurred" in response.data
+
+
+def test_post_with_custom_template(client):
+    with patch('itinerary_generator.app.generate_itinerary') as mock_generate, \
+         patch('itinerary_generator.app.send_file', return_value=("MOCKED_PATH", 200, {})) as mock_send:
+        
+        # Set up the mock to return HTML path only
+        mock_generate.return_value = ("output.html", None)
+
+        trip_data = b'{ "trip": { "startDate": "2025-08-20", "endDate": "2025-08-26" } }'
+        template_data = b"<html><body>{{ trip_name }}</body></html>"
+
+        response = client.post('/', data={
+            'trip_json': (BytesIO(trip_data), 'trip.json'),
+            'template_html': (BytesIO(template_data), 'custom_template.html'),
+        }, content_type='multipart/form-data')
+
+        assert response.status_code == 200
+        mock_generate.assert_called_once()
+        mock_send.assert_called_once()
