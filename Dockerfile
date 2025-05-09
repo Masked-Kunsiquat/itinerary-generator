@@ -1,10 +1,16 @@
 # Dockerfile for Phase 2: Web UI
 FROM python:alpine
 
+# Create app directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    curl \
+    build-base \
+    libffi-dev \
+    tzdata \
+    ca-certificates
 
 # Copy all project files
 COPY . /app
