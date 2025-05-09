@@ -7,5 +7,6 @@ flask
 # Dev-only
 pytest
 pytest-flask
+pytest-cov
 beautifulsoup4
 coverage
