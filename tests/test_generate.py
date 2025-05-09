@@ -4,6 +4,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import json
 import pytest
+from zoneinfo import ZoneInfo
+
+from app import app as flask_app
 from generate_itinerary import (
     load_trip_data,
     parse_dates,
@@ -12,10 +15,16 @@ from generate_itinerary import (
     render_itinerary,
 )
 
+
 @pytest.fixture
 def trip_data():
     with open("static/trip.sample.json", "r") as f:
         return json.load(f)
+    
+@pytest.fixture
+def client():
+    flask_app.config["TESTING"] = True
+    return flask_app.test_client()
 
 def test_load_trip_data():
     data = load_trip_data("static/trip.sample.json")
@@ -64,3 +73,8 @@ def test_render_itinerary(tmp_path, trip_data):
         assert "Sample Adventure" in html
         assert "Check-In" in html or "Check-Out" in html
         assert "<html" in html.lower()
+
+def test_homepage_loads(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"Generate Trip Itinerary" in response.data
