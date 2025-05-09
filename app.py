@@ -4,9 +4,12 @@ import os
 import tempfile
 from generate_itinerary import main as generate_main
 import sys
+import logging
+import traceback
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_files():
@@ -45,8 +48,9 @@ def upload_files():
         try:
             generate_main()
             return send_file(output_pdf if generate_pdf else output_html, as_attachment=True)
-        except Exception as e:
-            return f"Failed to generate: {e}", 500
+        except Exception:
+            logging.error("Itinerary generation failed:\n%s", traceback.format_exc())
+            return "An internal error occurred while generating the itinerary.", 500
 
     return render_template('form.html')
 
