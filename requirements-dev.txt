@@ -8,3 +8,4 @@ flask
 pytest
 pytest-flask
 beautifulsoup4
+coverage

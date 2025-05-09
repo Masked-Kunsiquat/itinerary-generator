@@ -4,3 +4,4 @@ __pycache__/
 output.html
 output.pdf
 .DS_Store
+.coverage
