@@ -1,0 +1,166 @@
+{
+  "trip": {
+    "id": "sample123",
+    "name": "Sample Adventure",
+    "description": "A fictional 5-day getaway to Testville, designed to showcase Surmai's itinerary features with a blend of travel, food, culture, and outdoor fun.",
+    "startDate": "2025-05-10T00:00:00Z",
+    "endDate": "2025-05-15T00:00:00Z",
+    "destinations": [
+      {
+        "id": "dest1",
+        "name": "Testville",
+        "stateName": "Demo State",
+        "countryName": "Fictionland",
+        "timezone": "America/New_York",
+        "latitude": "40.0000",
+        "longitude": "-75.0000"
+      }
+    ],
+    "participants": [
+      { "name": "Alice" },
+      { "name": "Bob" },
+      { "name": "Charlie" }
+    ],
+    "coverImage": null,
+    "coverImageFileName": null,
+    "notes": "<h2>What to Pack</h2><ul><li>Socks</li><li>Toothbrush</li><li>Chargers</li><li>Comfortable Shoes</li><li>Daypack</li></ul>"
+  },
+  "transportations": [
+    {
+      "id": "t1",
+      "type": "car",
+      "origin": "Home",
+      "destination": "Testville",
+      "cost": { "value": 0, "currency": "USD" },
+      "departure": "2025-05-10T08:00:00Z",
+      "arrival": "2025-05-10T11:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "provider": "Self" }
+    },
+    {
+      "id": "t2",
+      "type": "car",
+      "origin": "Testville",
+      "destination": "Home",
+      "cost": { "value": 0, "currency": "USD" },
+      "departure": "2025-05-15T10:00:00Z",
+      "arrival": "2025-05-15T13:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "provider": "Self" }
+    }
+  ],
+  "lodgings": [
+    {
+      "id": "l1",
+      "type": "hotel",
+      "name": "The Great Inn",
+      "address": "123 Example St, Testville, Demo State",
+      "confirmationCode": "ABC123",
+      "cost": { "value": 400, "currency": "USD" },
+      "startDate": "2025-05-10T14:00:00Z",
+      "endDate": "2025-05-14T10:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "roomType": "Double Queen", "nights": 4 }
+    },
+    {
+      "id": "l2",
+      "type": "bnb",
+      "name": "Cozy Cottage",
+      "address": "789 Retreat Rd, Testville",
+      "confirmationCode": "BNB456",
+      "cost": { "value": 120, "currency": "USD" },
+      "startDate": "2025-05-14T15:00:00Z",
+      "endDate": "2025-05-15T10:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "host": "Jane Doe" }
+    }
+  ],
+  "activities": [
+    {
+      "id": "a1",
+      "name": "Test Museum Visit",
+      "description": "A fun exploration of test artifacts.",
+      "address": "1 Discovery Way, Testville",
+      "confirmationCode": "",
+      "cost": { "value": 20, "currency": "USD" },
+      "startDate": "2025-05-12T13:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "tags": ["museum", "educational"] }
+    },
+    {
+      "id": "a2",
+      "name": "Welcome Dinner",
+      "description": "Group dinner at a local restaurant to kick off the trip.",
+      "address": "Downtown Testville",
+      "confirmationCode": "",
+      "cost": { "value": 30, "currency": "USD" },
+      "startDate": "2025-05-10T19:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "tags": ["food", "social"] }
+    },
+    {
+      "id": "a3",
+      "name": "Nature Hike",
+      "description": "A scenic hike through Testville Hills.",
+      "address": "Testville Hills Trailhead",
+      "confirmationCode": "",
+      "cost": { "value": 0, "currency": "USD" },
+      "startDate": "2025-05-11T09:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "tags": ["outdoors", "fitness"] }
+    },
+    {
+      "id": "a4",
+      "name": "Escape Room Challenge",
+      "description": "Team-based puzzle game.",
+      "address": "456 Puzzle Ave, Testville",
+      "confirmationCode": "",
+      "cost": { "value": 25, "currency": "USD" },
+      "startDate": "2025-05-13T15:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "tags": ["team", "fun"] }
+    },
+    {
+      "id": "a5",
+      "name": "Breakfast at Local Cafe",
+      "description": "Enjoy breakfast at a quaint Testville cafe.",
+      "address": "12 Brew St, Testville",
+      "confirmationCode": "",
+      "cost": { "value": 15, "currency": "USD" },
+      "startDate": "2025-05-11T08:00:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "tags": ["food"] }
+    },
+    {
+      "id": "a6",
+      "name": "Checkout & Final Walk",
+      "description": "Stroll through downtown before heading home.",
+      "address": "Main Street, Testville",
+      "confirmationCode": "",
+      "cost": { "value": 0, "currency": "USD" },
+      "startDate": "2025-05-15T08:30:00Z",
+      "attachments": null,
+      "attachmentReferences": [],
+      "metadata": { "tags": ["farewell", "casual"] }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "attach1",
+      "name": "Hotel Booking Confirmation",
+      "url": "https://example.com/booking.pdf",
+      "fileName": "booking.pdf",
+      "referenceType": "lodging",
+      "referenceId": "l1"
+    }
+  ]
+}
