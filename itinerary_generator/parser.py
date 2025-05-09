@@ -24,9 +24,9 @@ def load_trip_data(path):
         with open(path, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        raise FileNotFoundError(f"Trip data file not found: {path}")
+        raise FileNotFoundError(f"Trip data file not found: {path}") from None
     except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(f"Invalid JSON in trip data file: {e.msg}", e.doc, e.pos)
+        raise json.JSONDecodeError(f"Invalid JSON in trip data file: {e.msg}", e.doc, e.pos) from e
 
 
 def get_trip_timezone(trip):
@@ -70,10 +70,10 @@ def parse_dates(trip):
         return start, end
     except KeyError as e:
         # Specific error for missing required fields
-        raise KeyError(f"Trip data missing required date field: {e}")
+        raise KeyError(f"Trip data missing required date field: {e}") from e
     except ValueError as e:
         # Handle date parsing errors
-        raise ValueError(f"Invalid date format in trip data: {e}")
+        raise ValueError(f"Invalid date format in trip data: {e}") from e
 
 
 def build_days(start_date, end_date):

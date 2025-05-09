@@ -74,13 +74,13 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         
     except FileNotFoundError as e:
         # Re-raise with more context
-        raise FileNotFoundError(f"Failed to generate itinerary: {e}")
+        raise FileNotFoundError(f"Failed to generate itinerary: {e}") from e
     except KeyError as e:
         # Handle missing keys in trip data
-        raise ValueError(f"Invalid trip data structure, missing key: {e}")
+        raise ValueError(f"Invalid trip data structure, missing key: {e}") from e
     except Exception as e:
         # Catch-all for other errors
-        raise RuntimeError(f"Unexpected error generating itinerary: {e}")
+        raise RuntimeError(f"Unexpected error generating itinerary: {e}") from e
 
 
 def main():
