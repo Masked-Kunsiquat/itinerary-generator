@@ -170,3 +170,36 @@ def test_main_cli_with_pdf(monkeypatch, tmp_path):
         from generate_itinerary import main
         main()
         assert output_html.exists()
+
+def test_populate_days_address_edge_case():
+    # Activity with address as "N/A" → should skip address logic
+    data = {
+        "trip": {
+            "startDate": "2025-08-20T00:00:00Z",
+            "endDate": "2025-08-21T00:00:00Z",
+            "destinations": [],
+            "name": "Edge Test"
+        },
+        "activities": [
+            {
+                "startDate": "2025-08-20T10:00:00Z",
+                "name": "No Address Event",
+                "address": "N/A"
+            },
+            {
+                "startDate": "2025-08-20T12:00:00Z",
+                "name": "Empty Address",
+                "address": ""
+            }
+        ]
+    }
+
+    start, end = parse_dates(data["trip"])
+    tz = ZoneInfo("UTC")
+    days = build_days(start, end)
+    populate_days(days, data, tz)
+
+    # Make sure both events were added without crashing and without address suffix
+    labels = [label for day in days for _, label in day["events"]]
+    assert any("No Address Event" in l for l in labels)
+    assert not any("@" in l for l in labels)  # no @address suffix
