@@ -3,8 +3,8 @@ name: Auto-merge Dependabot PRs
 on:
   pull_request:
     types:
-      - opened
       - labeled
+      - opened
       - synchronize
 
 jobs:
@@ -12,7 +12,11 @@ jobs:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Enable auto-merge
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          merge-method: squash
+      - uses: actions/checkout@v4
+
+      - name: Automerge PR
+        uses: pascalgn/automerge-action@v0.15.6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
+          MERGE_LABELS: ""
