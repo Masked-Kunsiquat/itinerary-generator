@@ -1,16 +1,18 @@
 [run]
-# Ignore compiled files, test code, and virtual environments
+source = itinerary_generator
 omit =
     */__pycache__/*
     */tests/*
     */.venv/*
-    default-template.html
+    itinerary_generator/data/*
+    itinerary_generator/static/*
 
 [report]
-# Don't count typical boilerplate as missed
 exclude_lines =
     pragma: no cover
     if __name__ == .__main__.:
+    def main\(\):
+    def run\(\):
 
 [html]
 directory = htmlcov

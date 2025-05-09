@@ -1,12 +1,8 @@
-# requirements-dev.txt
-# Base deps
-jinja2
-requests
-flask
-
-# Dev-only
+-r requirements.txt
 pytest
 pytest-flask
 pytest-cov
-beautifulsoup4
-coverage
+flake8
+black
+build
+twine

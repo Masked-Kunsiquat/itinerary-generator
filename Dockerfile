@@ -1,7 +1,6 @@
-# Dockerfile for Phase 2: Web UI
 FROM python:alpine
 
-# Metadata labels (OCI-compliant)
+# Metadata labels
 LABEL org.opencontainers.image.title="Surmai Itinerary Generator" \
       org.opencontainers.image.description="Web app for rendering Surmai trip exports to print-friendly templates" \
       org.opencontainers.image.version="1.0.1" \
@@ -22,12 +21,12 @@ RUN apk add --no-cache \
  && adduser -D -u 1000 appuser
 
 # Copy project files
-COPY . /app
+COPY . /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
-# Fix permissions for non-root user (optional, but safer if writing files)
+# Fix permissions for non-root user
 RUN chown -R appuser:appuser /app
 
 # Switch to non-root user
@@ -37,4 +36,4 @@ USER appuser
 EXPOSE 5000
 
 # Default command
-CMD ["python", "app.py"]
+CMD ["python", "-m", "itinerary_generator.web"]

@@ -6,3 +6,8 @@ output.pdf
 .DS_Store
 .coverage
 htmlcov/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.venv/

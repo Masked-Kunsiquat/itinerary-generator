@@ -25,12 +25,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+          pip install -e .
 
       - name: Run tests with coverage and JUnit output
         run: |
-          pytest --cov=. --cov-branch \
+          pytest --cov=itinerary_generator --cov-branch \
                  --cov-report=term \
                  --cov-report=xml \
+                 --cov-config=.coveragerc \
                  --junitxml=junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
