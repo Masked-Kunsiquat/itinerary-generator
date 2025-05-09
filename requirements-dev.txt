@@ -1,0 +1,10 @@
+# requirements-dev.txt
+# Base deps
+jinja2
+requests
+flask
+
+# Dev-only
+pytest
+pytest-flask
+beautifulsoup4
