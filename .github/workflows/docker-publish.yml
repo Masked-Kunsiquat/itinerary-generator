@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     tags:
-      - 'v*'  # optional: auto-publish if tag like v1.0.1 is pushed
+      - 'v*.*.*'
 
 jobs:
   docker:
@@ -33,14 +33,14 @@ jobs:
         with:
           images: maskedkunsiquat/itinerary-generator
 
-      - name: Extract tag or default to latest
+      - name: Determine tags
         id: version
         run: |
-          VERSION="${GITHUB_REF##*/}"
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+            VERSION="${GITHUB_REF##*/}"
+            echo "tags=maskedkunsiquat/itinerary-generator:${VERSION},maskedkunsiquat/itinerary-generator:latest" >> $GITHUB_OUTPUT
           else
-            echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "tags=maskedkunsiquat/itinerary-generator:latest" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push image (with SBOM and provenance)
@@ -50,7 +50,5 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: |
-            maskedkunsiquat/itinerary-generator:latest
-            maskedkunsiquat/itinerary-generator:${{ steps.version.outputs.tag }}
+          tags: ${{ steps.version.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
