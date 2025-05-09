@@ -1,5 +1,5 @@
 # Dockerfile for Phase 2: Web UI
-FROM python:3.13-slim
+FROM python:alpine
 
 WORKDIR /app
 
