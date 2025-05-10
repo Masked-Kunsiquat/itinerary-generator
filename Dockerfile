@@ -7,6 +7,9 @@ LABEL org.opencontainers.image.title="Surmai Itinerary Generator" \
       org.opencontainers.image.source="https://github.com/Masked-Kunsiquat/itinerary-generator" \
       org.opencontainers.image.licenses="MIT"
 
+# Default timezone - will be overridden by docker-compose or runtime env
+ENV TZ=UTC
+
 # Set working directory
 WORKDIR /app
 

@@ -3,6 +3,7 @@ Parser module for loading and structuring Surmai trip data.
 """
 from datetime import datetime, timedelta
 import json
+import os
 from zoneinfo import ZoneInfo
 
 
@@ -29,25 +30,62 @@ def load_trip_data(path):
         raise json.JSONDecodeError(f"Invalid JSON in trip data file: {e.msg}", e.doc, e.pos) from e
 
 
-def get_trip_timezone(trip):
+def get_trip_timezone(trip, user_timezone=None):
     """
-    Extract timezone from trip destinations or fallback to UTC.
+    Get timezone from user preference, environment, trip destinations or fallback to UTC.
+    
+    Priority:
+    1. User-provided timezone (if valid)
+    2. Environment variable TZ
+    3. Trip destination timezone
+    4. UTC fallback
     
     Args:
         trip (dict): Trip data with destinations
+        user_timezone (str, optional): User-specified timezone
         
     Returns:
         str: Timezone string (e.g., 'America/New_York') or 'UTC'
     """
+    # Priority 1: Use user-provided timezone if valid
+    if user_timezone:
+        try:
+            # Validate the timezone
+            ZoneInfo(user_timezone)
+            return user_timezone
+        except Exception:
+            # Invalid timezone provided, fall through to next option
+            pass
+    
+    # Priority 2: Use environment variable TZ if available
+    env_tz = os.environ.get('TZ')
+    if env_tz:
+        try:
+            # Validate the timezone from environment
+            ZoneInfo(env_tz)
+            return env_tz
+        except Exception:
+            # Invalid timezone in environment, fall through to next option
+            pass
+    
+    # Priority 3: Extract from trip destinations
     try:
-        if not trip.get("destinations"):
-            return "UTC"
-        
-        timezone = trip["destinations"][0].get("timezone")
-        return timezone if timezone else "UTC"
+        if trip.get("destinations") and len(trip["destinations"]) > 0:
+            timezone = trip["destinations"][0].get("timezone")
+            if timezone:
+                # Validate the timezone from trip data
+                try:
+                    ZoneInfo(timezone)
+                    return timezone
+                except Exception:
+                    # Invalid timezone in trip data, fall through to fallback
+                    pass
     except (IndexError, KeyError, TypeError):
-        # Fallback to UTC in case of any issues with the data structure
-        return "UTC"
+        # Issue with trip data structure, fall through to fallback
+        pass
+        
+    # Priority 4: Fallback to UTC
+    return "UTC"
 
 
 def parse_dates(trip):
@@ -102,3 +140,41 @@ def build_days(start_date, end_date):
             "lodging_banner": None
         })
     return days
+
+
+def get_common_timezones():
+    """
+    Return a list of common timezones for UI display.
+    
+    Returns:
+        list: List of common timezone strings
+    """
+    # List of common timezones for UI dropdown
+    common_timezones = [
+        "UTC",
+        "America/New_York",
+        "America/Chicago", 
+        "America/Denver",
+        "America/Los_Angeles",
+        "Europe/London",
+        "Europe/Paris",
+        "Europe/Berlin",
+        "Asia/Tokyo",
+        "Asia/Singapore",
+        "Australia/Sydney",
+        "Pacific/Auckland"
+    ]
+    
+    # Ensure all timezones in the list are valid
+    valid_timezones = []
+    
+    for tz in common_timezones:
+        try:
+            # Validate by attempting to create a ZoneInfo object
+            ZoneInfo(tz)
+            valid_timezones.append(tz)
+        except Exception:
+            # Skip invalid timezones
+            pass
+    
+    return valid_timezones

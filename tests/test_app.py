@@ -2,7 +2,7 @@ import pytest
 from io import BytesIO
 import sys
 import os
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from itinerary_generator.app import app
 
@@ -12,6 +12,13 @@ def client():
     app.config['TESTING'] = True
     with app.test_client() as client:
         yield client
+
+
+# Patch the get_common_timezones function to avoid timezone validation during tests
+@pytest.fixture(autouse=True)
+def mock_get_common_timezones():
+    with patch('itinerary_generator.app.get_common_timezones', return_value=["UTC", "America/New_York"]):
+        yield
 
 
 def test_get_root(client):

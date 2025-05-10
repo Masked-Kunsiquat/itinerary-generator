@@ -10,13 +10,13 @@ import os
 from zoneinfo import ZoneInfo
 
 # Import our modularized components
-from itinerary_generator.parser import load_trip_data, get_trip_timezone, parse_dates, build_days
+from itinerary_generator.parser import load_trip_data, get_trip_timezone, parse_dates, build_days, get_common_timezones
 from itinerary_generator.formatting import populate_days
 from itinerary_generator.lookups import enrich_trip_data
 from itinerary_generator.renderer import create_template_context, render_itinerary, convert_to_pdf
 
 
-def generate_itinerary(json_path, template_path, output_html, pdf_path=None, gotenberg_url=None):
+def generate_itinerary(json_path, template_path, output_html, pdf_path=None, gotenberg_url=None, user_timezone=None):
     """
     Generate an itinerary from a Surmai trip.json file.
     
@@ -26,6 +26,7 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         output_html (str): Path to save the rendered HTML output
         pdf_path (str, optional): Path to save PDF output (requires Gotenberg)
         gotenberg_url (str, optional): URL for Gotenberg PDF conversion service
+        user_timezone (str, optional): User-specified timezone to use for display
         
     Returns:
         tuple: (html_path, pdf_path) - Paths to the generated files (pdf_path may be None)
@@ -45,7 +46,9 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         # Extract key trip information
         trip = trip_data["trip"]
         start_date, end_date = parse_dates(trip)
-        timezone_str = get_trip_timezone(trip)
+        
+        # Get the appropriate timezone using the new priority system
+        timezone_str = get_trip_timezone(trip, user_timezone)
         tz = ZoneInfo(timezone_str)
         
         # Build day structures
@@ -56,6 +59,9 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         
         # Create template context
         context = create_template_context(trip_data, days)
+        
+        # Add timezone info to the context for display
+        context["timezone"] = timezone_str
         
         # Render HTML
         html_path = render_itinerary(template_path, context, output_html)
@@ -98,6 +104,10 @@ def main():
         default="http://localhost:3000/forms/chromium/convert/html", 
         help="Gotenberg HTML conversion endpoint"
     )
+    parser.add_argument(
+        "--timezone",
+        help="Timezone to use for displaying times (e.g., America/New_York)"
+    )
     
     args = parser.parse_args()
     
@@ -106,7 +116,8 @@ def main():
         template_path=args.template_path,
         output_html=args.output_html,
         pdf_path=args.pdf,
-        gotenberg_url=args.gotenberg_url
+        gotenberg_url=args.gotenberg_url,
+        user_timezone=args.timezone
     )
     
     print(f"HTML itinerary generated: {html_path}")

@@ -88,6 +88,7 @@ def test_main_function():
         args.output_html = "output.html"
         args.pdf = "output.pdf"
         args.gotenberg_url = "http://gotenberg:3000"
+        args.timezone = "UTC"  # Add timezone argument
         mock_args.return_value = args
         
         # Mock the generate_itinerary function
@@ -96,13 +97,14 @@ def test_main_function():
         # Call the main function
         main()
         
-        # Verify the generate_itinerary function was called with expected args
+        # Verify the generate_itinerary function was called with expected args, including timezone
         mock_generate.assert_called_once_with(
             json_path="trip.json",
             template_path="template.html",
             output_html="output.html",
             pdf_path="output.pdf",
-            gotenberg_url="http://gotenberg:3000"
+            gotenberg_url="http://gotenberg:3000",
+            user_timezone="UTC"
         )
 
 
@@ -118,6 +120,7 @@ def test_main_function_no_pdf():
         args.output_html = "output.html"
         args.pdf = None
         args.gotenberg_url = "http://gotenberg:3000"
+        args.timezone = None  # No timezone specified
         mock_args.return_value = args
         
         # Mock the generate_itinerary function
@@ -132,5 +135,6 @@ def test_main_function_no_pdf():
             template_path="template.html",
             output_html="output.html",
             pdf_path=None,
-            gotenberg_url="http://gotenberg:3000"
+            gotenberg_url="http://gotenberg:3000",
+            user_timezone=None
         )

@@ -7,6 +7,7 @@ import traceback
 
 # Import our main generator function instead of using CLI simulation
 from itinerary_generator.generate_itinerary import generate_itinerary
+from itinerary_generator.parser import get_common_timezones
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
@@ -18,6 +19,7 @@ def upload_files():
         trip_file = request.files.get('trip_json')
         template_file = request.files.get('template_html')
         generate_pdf = request.form.get('generate_pdf') == 'on'
+        user_timezone = request.form.get('timezone')
 
         if not trip_file:
             return "Missing trip.json file", 400
@@ -53,13 +55,14 @@ def upload_files():
         gotenberg_url = 'http://gotenberg:3000/forms/chromium/convert/html' if generate_pdf else None
 
         try:
-            # Use the modularized generate_itinerary function
+            # Use the modularized generate_itinerary function with timezone parameter
             html_path, pdf_path = generate_itinerary(
                 json_path=trip_path,
                 template_path=template_path,
                 output_html=output_html,
                 pdf_path=output_pdf,
-                gotenberg_url=gotenberg_url
+                gotenberg_url=gotenberg_url,
+                user_timezone=user_timezone
             )
             
             # Return the appropriate file
@@ -68,7 +71,9 @@ def upload_files():
             logging.error("Itinerary generation failed:\n%s", traceback.format_exc())
             return "An internal error occurred while generating the itinerary.", 500
 
-    return render_template('form.html')
+    # Get list of common timezones for the dropdown
+    timezones = get_common_timezones()
+    return render_template('form.html', timezones=timezones)
 
 if __name__ == '__main__':
     # Use environment variable to control debug mode, default to False for security
