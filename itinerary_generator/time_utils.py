@@ -75,7 +75,7 @@ def convert_to_timezone(dt, timezone):
     Convert a datetime to another timezone.
     
     Args:
-        dt (datetime): Datetime object to convert (must be timezone-aware)
+        dt (datetime): Datetime object to convert (will be made timezone-aware if not already)
         timezone (str or ZoneInfo): Target timezone
         
     Returns:
@@ -84,9 +84,11 @@ def convert_to_timezone(dt, timezone):
     if isinstance(timezone, str):
         timezone = ZoneInfo(timezone)
     
-    # Ensure datetime is timezone-aware
+    # If datetime is not timezone-aware, assume it's in Eastern Time
     if dt.tzinfo is None:
-        raise ValueError("Input datetime must be timezone-aware")
+        from zoneinfo import ZoneInfo
+        et_tz = ZoneInfo("America/New_York")
+        dt = dt.replace(tzinfo=et_tz)
     
     return dt.astimezone(timezone)
 

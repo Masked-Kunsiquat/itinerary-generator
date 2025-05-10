@@ -103,11 +103,26 @@ def parse_dates(trip):
         ValueError: If dates are in an invalid format
     """
     try:
-        # Convert ISO format strings to datetime objects
-        # When the 'Z' is present, it denotes UTC time
-        # Replace with +00:00 to make it timezone-aware
-        start = datetime.fromisoformat(trip["startDate"].replace("Z", "+00:00"))
-        end = datetime.fromisoformat(trip["endDate"].replace("Z", "+00:00"))
+        start_str = trip["startDate"]
+        end_str = trip["endDate"]
+        
+        # For timestamps with Z, they're UTC
+        if start_str.endswith("Z"):
+            start = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+        else:
+            # For timestamps without Z, assume they're Eastern Time
+            from zoneinfo import ZoneInfo
+            et_tz = ZoneInfo("America/New_York")
+            start = datetime.fromisoformat(start_str).replace(tzinfo=et_tz)
+        
+        # Same handling for end date
+        if end_str.endswith("Z"):
+            end = datetime.fromisoformat(end_str.replace("Z", "+00:00"))
+        else:
+            from zoneinfo import ZoneInfo
+            et_tz = ZoneInfo("America/New_York")
+            end = datetime.fromisoformat(end_str).replace(tzinfo=et_tz)
+            
         return start, end
     except KeyError as e:
         # Specific error for missing required fields

@@ -7,6 +7,7 @@ from Surmai trip.json exports using custom Jinja2 templates.
 """
 import argparse
 import os
+import copy
 from zoneinfo import ZoneInfo
 
 # Import our modularized components
@@ -15,6 +16,44 @@ from itinerary_generator.formatting import populate_days
 from itinerary_generator.lookups import enrich_trip_data
 from itinerary_generator.renderer import create_template_context, render_itinerary, convert_to_pdf
 from itinerary_generator.time_utils import get_user_timezone, get_timezone_display_info
+
+def adjust_incorrect_utc_timestamps(trip_data):
+    """Simply remove the Z suffix from all timestamps and return times as originally entered."""
+    import copy
+    fixed_data = copy.deepcopy(trip_data)
+    
+    # Process all transportation events
+    for transport in fixed_data.get("transportations", []):
+        # Simply remove Z suffix to keep the time as entered
+        if "departure" in transport and transport["departure"].endswith("Z"):
+            transport["departure"] = transport["departure"].rstrip("Z")
+            
+        if "arrival" in transport and transport["arrival"].endswith("Z"):
+            transport["arrival"] = transport["arrival"].rstrip("Z")
+    
+    # Process all lodging events
+    for lodging in fixed_data.get("lodgings", []):
+        if "startDate" in lodging and lodging["startDate"].endswith("Z"):
+            lodging["startDate"] = lodging["startDate"].rstrip("Z")
+            
+        if "endDate" in lodging and lodging["endDate"].endswith("Z"):
+            lodging["endDate"] = lodging["endDate"].rstrip("Z")
+    
+    # Process all activities
+    for activity in fixed_data.get("activities", []):
+        if "startDate" in activity and activity["startDate"].endswith("Z"):
+            activity["startDate"] = activity["startDate"].rstrip("Z")
+    
+    # Trip start/end dates
+    if "trip" in fixed_data:
+        trip = fixed_data["trip"]
+        if "startDate" in trip and trip["startDate"].endswith("Z"):
+            trip["startDate"] = trip["startDate"].rstrip("Z")
+            
+        if "endDate" in trip and trip["endDate"].endswith("Z"):
+            trip["endDate"] = trip["endDate"].rstrip("Z")
+    
+    return fixed_data
 
 
 def generate_itinerary(json_path, template_path, output_html, pdf_path=None, gotenberg_url=None, user_timezone=None):
@@ -40,6 +79,10 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
     try:
         # Load and parse the trip data
         trip_data = load_trip_data(json_path)
+        
+        # IMPORTANT: Fix the incorrectly UTC-marked timestamps
+        # This adjusts for Surmai's export issue where times are in ET but marked as UTC
+        trip_data = adjust_incorrect_utc_timestamps(trip_data)
         
         # Optionally enrich data (placeholder for future expansion)
         trip_data = enrich_trip_data(trip_data)
