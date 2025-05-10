@@ -4,18 +4,24 @@ Formatting module for handling timezones, emoji mapping, and content formatting.
 from datetime import datetime
 from itinerary_generator.time_utils import format_time, convert_to_timezone
 
-
 def insert_event(days, event_datetime, tz, label):
     """
     Insert an event into the appropriate day at the correct time.
     
     Args:
         days (list): List of day dictionaries
-        event_datetime (datetime): Event time (UTC)
+        event_datetime (datetime): Event time (UTC or local)
         tz (ZoneInfo): Target timezone for display
         label (str): Event label/description
     """
-    # Convert the UTC datetime to the local timezone for proper day allocation
+    # Ensure datetime is timezone-aware
+    if event_datetime.tzinfo is None:
+        # If it's not timezone-aware, assume it's Eastern Time
+        from zoneinfo import ZoneInfo
+        et_tz = ZoneInfo("America/New_York")
+        event_datetime = event_datetime.replace(tzinfo=et_tz)
+    
+    # Convert to the local timezone for proper day allocation
     local_datetime = convert_to_timezone(event_datetime, tz)
     local_date = local_datetime.date()
     
@@ -24,7 +30,6 @@ def insert_event(days, event_datetime, tz, label):
             # Store the local time for display, not UTC time
             day["events"].append((local_datetime.time(), label))
             break
-
 
 def get_transport_icon(transport_type):
     """
@@ -61,10 +66,31 @@ def format_lodging_events(days, lodgings, tz):
         tz (ZoneInfo): Target timezone for display
     """
     for lodging in lodgings:
-        # Parse the ISO timestamps to datetime objects (UTC)
-        checkin = datetime.fromisoformat(lodging["startDate"].replace("Z", "+00:00"))
-        checkout = datetime.fromisoformat(lodging["endDate"].replace("Z", "+00:00"))
         name = lodging["name"]
+
+        # Parse the ISO timestamps to datetime objects
+        # Handle both with and without timezone info
+        try:
+            # If startDate ends with Z, it was originally in UTC
+            if lodging["startDate"].endswith("Z"):
+                checkin = datetime.fromisoformat(lodging["startDate"].replace("Z", "+00:00"))
+            else:
+                # No Z suffix, assume it's Eastern Time
+                from zoneinfo import ZoneInfo
+                et_tz = ZoneInfo("America/New_York")
+                checkin = datetime.fromisoformat(lodging["startDate"]).replace(tzinfo=et_tz)
+                
+            # If endDate ends with Z, it was originally in UTC
+            if lodging["endDate"].endswith("Z"):
+                checkout = datetime.fromisoformat(lodging["endDate"].replace("Z", "+00:00"))
+            else:
+                # No Z suffix, assume it's Eastern Time
+                from zoneinfo import ZoneInfo
+                et_tz = ZoneInfo("America/New_York")
+                checkout = datetime.fromisoformat(lodging["endDate"]).replace(tzinfo=et_tz)
+        except (ValueError, KeyError):
+            # If there's any issue with parsing, just skip this lodging
+            continue
 
         # Convert to local time for display
         checkin_local = convert_to_timezone(checkin, tz)
@@ -163,7 +189,6 @@ def get_transport_description(transport):
     
     return description
 
-
 def format_transport_events(days, transportations, tz):
     """
     Format and insert transportation events.
@@ -174,13 +199,38 @@ def format_transport_events(days, transportations, tz):
         tz (ZoneInfo): Target timezone for display
     """
     for transport in transportations:
-        # Parse the ISO timestamps to datetime objects (UTC)
-        departure = datetime.fromisoformat(transport["departure"].replace("Z", "+00:00"))
-        arrival = datetime.fromisoformat(transport["arrival"].replace("Z", "+00:00"))
+        # Parse the ISO timestamps to datetime objects with timezone info
+        try:
+            # Handle departure time
+            if "departure" in transport:
+                if transport["departure"].endswith("Z"):
+                    departure = datetime.fromisoformat(transport["departure"].replace("Z", "+00:00"))
+                else:
+                    # No Z suffix, assume it's Eastern Time
+                    from zoneinfo import ZoneInfo
+                    et_tz = ZoneInfo("America/New_York")
+                    departure = datetime.fromisoformat(transport["departure"]).replace(tzinfo=et_tz)
+            else:
+                continue  # Skip if no departure time
+                
+            # Handle arrival time
+            if "arrival" in transport:
+                if transport["arrival"].endswith("Z"):
+                    arrival = datetime.fromisoformat(transport["arrival"].replace("Z", "+00:00"))
+                else:
+                    # No Z suffix, assume it's Eastern Time
+                    from zoneinfo import ZoneInfo
+                    et_tz = ZoneInfo("America/New_York")
+                    arrival = datetime.fromisoformat(transport["arrival"]).replace(tzinfo=et_tz)
+            else:
+                arrival = None  # Allow for one-way trips
+        except (ValueError, KeyError):
+            # If there's any issue with parsing, just skip this transport
+            continue
         
         # Convert to local time for display
         dep_local = convert_to_timezone(departure, tz)
-        arr_local = convert_to_timezone(arrival, tz)
+        arr_local = None if arrival is None else convert_to_timezone(arrival, tz)
         
         # Get the icon for this transport type
         icon = get_transport_icon(transport["type"])
@@ -188,18 +238,17 @@ def format_transport_events(days, transportations, tz):
         # Get human-readable description
         description = get_transport_description(transport)
         
-        # Add extra info for multi-day transportation or cross-timezone travel
+        # Add arrival info for flights and trains, or multi-day travel
         extra = ""
-        # Always show arrival info for international/cross-timezone travel
-        if dep_local.date() != arr_local.date() or transport["type"] in ["flight", "train"]:
+        if arr_local and (dep_local.date() != arr_local.date() or transport["type"] in ["flight", "train"]):
             # Format arrival time in local time
             arr_time = format_time(arr_local)
             # If different day, include the date too
             if dep_local.date() != arr_local.date():
                 arr_date = arr_local.strftime('%b %-d')
-                extra = f" (arrives {arr_time}, {arr_date} — local time)"
+                extra = f" (arrives {arr_time}, {arr_date})"  # Removed "— local time"
             else:
-                extra = f" (arrives {arr_time} — local time)"
+                extra = f" (arrives {arr_time})"  # Removed "— local time"
         
         # Format departure time in local time
         dep_time = format_time(dep_local)
@@ -207,10 +256,9 @@ def format_transport_events(days, transportations, tz):
         # Create the full label with icon, time, and description
         label = f"{icon} {dep_time} — {description}{extra}"
         
-        # Insert the event using original UTC time
-        # The insert_event function will handle timezone conversion
+        # Insert the event
         insert_event(days, departure, tz, label)
-
+        
 
 def format_activity_events(days, activities, tz):
     """
@@ -225,8 +273,19 @@ def format_activity_events(days, activities, tz):
         if not activity or not activity.get("startDate"):
             continue  # skip if malformed
             
-        # Parse the ISO timestamp to datetime object (UTC)
-        start_time = datetime.fromisoformat(activity["startDate"].replace("Z", "+00:00"))
+        try:
+            # Parse the ISO timestamp with timezone info
+            if activity["startDate"].endswith("Z"):
+                start_time = datetime.fromisoformat(activity["startDate"].replace("Z", "+00:00"))
+            else:
+                # No Z suffix, assume it's Eastern Time
+                from zoneinfo import ZoneInfo
+                et_tz = ZoneInfo("America/New_York")
+                start_time = datetime.fromisoformat(activity["startDate"]).replace(tzinfo=et_tz)
+        except ValueError:
+            # If there's any issue with parsing, just skip this activity
+            continue
+            
         name = activity.get("name", "Unnamed Activity")
         address = activity.get("address", "")
         
@@ -241,7 +300,7 @@ def format_activity_events(days, activities, tz):
         if address and address.lower() != "n/a" and address.strip():
             label += f" @ {address}"
             
-        # Insert the event using original UTC time
+        # Insert the event using original time
         # The insert_event function will handle timezone conversion
         insert_event(days, start_time, tz, label)
 
