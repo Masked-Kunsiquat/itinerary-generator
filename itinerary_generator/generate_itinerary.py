@@ -14,6 +14,7 @@ from itinerary_generator.parser import load_trip_data, get_trip_timezone, parse_
 from itinerary_generator.formatting import populate_days
 from itinerary_generator.lookups import enrich_trip_data
 from itinerary_generator.renderer import create_template_context, render_itinerary, convert_to_pdf
+from itinerary_generator.time_utils import get_user_timezone, get_timezone_display_info
 
 
 def generate_itinerary(json_path, template_path, output_html, pdf_path=None, gotenberg_url=None, user_timezone=None):
@@ -48,8 +49,14 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         start_date, end_date = parse_dates(trip)
         
         # Get the appropriate timezone using the new priority system
-        timezone_str = get_trip_timezone(trip, user_timezone)
-        tz = ZoneInfo(timezone_str)
+        dest_timezone_str = get_trip_timezone(trip)
+        
+        # User timezone gets priority if specified
+        display_timezone_str = user_timezone or dest_timezone_str
+        
+        # Create timezone objects
+        tz = ZoneInfo(display_timezone_str)
+        dest_tz = ZoneInfo(dest_timezone_str)
         
         # Build day structures
         days = build_days(start_date, end_date)
@@ -61,7 +68,11 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         context = create_template_context(trip_data, days)
         
         # Add timezone info to the context for display
-        context["timezone"] = timezone_str
+        context["timezone"] = display_timezone_str
+        
+        # Add timezone difference info if destination timezone differs from display timezone
+        if dest_timezone_str != display_timezone_str:
+            context["timezone_info"] = get_timezone_display_info(display_timezone_str, dest_timezone_str)
         
         # Render HTML
         html_path = render_itinerary(template_path, context, output_html)

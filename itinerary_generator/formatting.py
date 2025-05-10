@@ -2,6 +2,7 @@
 Formatting module for handling timezones, emoji mapping, and content formatting.
 """
 from datetime import datetime
+from itinerary_generator.time_utils import format_time, convert_to_timezone
 
 
 def insert_event(days, event_datetime, tz, label):
@@ -15,7 +16,7 @@ def insert_event(days, event_datetime, tz, label):
         label (str): Event label/description
     """
     # Convert the UTC datetime to the local timezone for proper day allocation
-    local_datetime = event_datetime.astimezone(tz)
+    local_datetime = convert_to_timezone(event_datetime, tz)
     local_date = local_datetime.date()
     
     for day in days:
@@ -50,20 +51,6 @@ def get_transport_icon(transport_type):
     return icons.get(transport_type.lower(), "🚗")
 
 
-def format_time(dt):
-    """
-    Format a datetime in a consistent way with no leading zeros.
-    
-    Args:
-        dt (datetime): Datetime object to format
-        
-    Returns:
-        str: Formatted time string (e.g., "9:30 AM" instead of "09:30 AM")
-    """
-    # Format the time without leading zeros on hour
-    return dt.strftime('%-I:%M %p') if dt.strftime('%p') else dt.strftime('%-H:%M')
-
-
 def format_lodging_events(days, lodgings, tz):
     """
     Format and insert lodging check-in/out events and day banners.
@@ -80,8 +67,8 @@ def format_lodging_events(days, lodgings, tz):
         name = lodging["name"]
 
         # Convert to local time for display
-        checkin_local = checkin.astimezone(tz)
-        checkout_local = checkout.astimezone(tz)
+        checkin_local = convert_to_timezone(checkin, tz)
+        checkout_local = convert_to_timezone(checkout, tz)
         
         # Format times for display
         checkin_time = format_time(checkin_local)
@@ -94,8 +81,8 @@ def format_lodging_events(days, lodgings, tz):
 
         # Add lodging banners for nights at this lodging
         # Convert to local dates for comparison
-        checkin_date = checkin.astimezone(tz).date()
-        checkout_date = checkout.astimezone(tz).date()
+        checkin_date = checkin_local.date()
+        checkout_date = checkout_local.date()
         
         for day in days:
             day_date = day["date"].date()
@@ -192,8 +179,8 @@ def format_transport_events(days, transportations, tz):
         arrival = datetime.fromisoformat(transport["arrival"].replace("Z", "+00:00"))
         
         # Convert to local time for display
-        dep_local = departure.astimezone(tz)
-        arr_local = arrival.astimezone(tz)
+        dep_local = convert_to_timezone(departure, tz)
+        arr_local = convert_to_timezone(arrival, tz)
         
         icon = get_transport_icon(transport["type"])
         
@@ -240,7 +227,7 @@ def format_activity_events(days, activities, tz):
         icon = "🎟️"
         
         # Convert to local time for display
-        local_datetime = start_time.astimezone(tz)
+        local_datetime = convert_to_timezone(start_time, tz)
         local_time_str = format_time(local_datetime)
         
         label = f"{icon} {local_time_str} — {name}"
