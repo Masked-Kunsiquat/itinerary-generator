@@ -23,9 +23,24 @@ def create_template_context(trip_data, days):
     start_date = days[0]["date"] if days else None
     end_date = days[-1]["date"] if days else None
     
+    # Get the destination information
+    destination = ""
+    if trip.get("destinations") and len(trip["destinations"]) > 0:
+        dest = trip["destinations"][0]
+        # Format destination as City, State/Province, Country
+        destination_parts = []
+        if dest.get("name"):
+            destination_parts.append(dest["name"])
+        if dest.get("stateName"):
+            destination_parts.append(dest["stateName"])
+        if dest.get("countryName"):
+            destination_parts.append(dest["countryName"])
+        destination = ", ".join(destination_parts)
+    
     # Create the context dictionary with all variables needed by templates
     return {
-        "trip_name": trip["name"],
+        "trip_name": trip["name"],  # Trip title/name
+        "trip_destination": destination,  # Actual physical destination
         "start_date": start_date.strftime("%b %d, %Y") if start_date else "",
         "end_date": end_date.strftime("%b %d, %Y") if end_date else "",
         "days": days,

@@ -103,6 +103,80 @@ def format_lodging_events(days, lodgings, tz):
                 day["lodging_banner"] = f"🏨 Lodging: Staying at {name}"
 
 
+def get_transport_description(transport):
+    """
+    Create a human-readable description for a transportation event.
+    
+    Args:
+        transport (dict): Transportation data
+        
+    Returns:
+        str: Readable description of the transportation
+    """
+    transport_type = transport["type"].lower()
+    origin = transport["origin"]
+    destination = transport["destination"]
+    
+    # Get provider information - handle both string and object formats
+    metadata = transport.get("metadata", {})
+    provider_data = metadata.get("provider", "")
+    
+    # Handle complex provider object
+    if isinstance(provider_data, dict):
+        # Use the provider name if available, otherwise the code
+        provider = provider_data.get("name") or provider_data.get("code") or ""
+    else:
+        # Simple string provider
+        provider = provider_data
+    
+    # Get confirmation code from either top-level or metadata
+    confirmation = transport.get("confirmationCode", "")
+    if not confirmation and metadata:
+        confirmation = metadata.get("reservation", "")
+    
+    # Format based on transport type
+    if transport_type == "flight":
+        description = f"Flight from {origin} to {destination}"
+        if provider:
+            description += f" via {provider}"
+    
+    elif transport_type == "train":
+        description = f"Train from {origin} to {destination}"
+        if provider:
+            description += f" ({provider})"
+    
+    elif transport_type == "bus":
+        description = f"Bus from {origin} to {destination}"
+        if provider:
+            description += f" with {provider}"
+    
+    elif transport_type == "ferry":
+        description = f"Ferry from {origin} to {destination}"
+        if provider:
+            description += f" with {provider}"
+    
+    elif transport_type == "car" and provider and provider.lower() == "rental":
+        description = f"Drive rental car from {origin} to {destination}"
+    
+    elif transport_type == "car" and provider and provider.lower() == "self":
+        description = f"Drive from {origin} to {destination}"
+    
+    elif transport_type == "car" and provider and provider.lower() in ["uber", "lyft", "taxi"]:
+        description = f"{provider.title()} from {origin} to {destination}"
+    
+    else:
+        # Default format
+        description = f"{transport_type.title()} from {origin} to {destination}"
+        if provider and provider.lower() != "self":
+            description += f" with {provider}"
+    
+    # Add confirmation code if available
+    if confirmation:
+        description += f" (#{confirmation})"
+    
+    return description
+
+
 def format_transport_events(days, transportations, tz):
     """
     Format and insert transportation events.
@@ -123,17 +197,22 @@ def format_transport_events(days, transportations, tz):
         
         icon = get_transport_icon(transport["type"])
         
+        # Get human-readable description
+        description = get_transport_description(transport)
+        
         # Add extra info for multi-day transportation
         extra = ""
         if dep_local.date() != arr_local.date():
             # Format arrival time in local time
             arr_time = format_time(arr_local)
             arr_date = arr_local.strftime('%b %d')
-            extra = f"(arrives {arr_time}, {arr_date} — local time)"
+            extra = f" (arrives {arr_time}, {arr_date} — local time)"
         
         # Format departure time in local time
         dep_time = format_time(dep_local)
-        label = f"{icon} {dep_time} — {transport['type'].title()} from {transport['origin']} to {transport['destination']} {extra}"
+        
+        # Create the full label with icon, time, and description
+        label = f"{icon} {dep_time} — {description}{extra}"
         
         # Insert the event using original UTC time
         # The insert_event function will handle timezone conversion
