@@ -1,5 +1,3 @@
-import sys
-import os
 import pytest
 from datetime import datetime
 from zoneinfo import ZoneInfo

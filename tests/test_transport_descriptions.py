@@ -1,9 +1,3 @@
-import sys
-import os
-import pytest
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
 from itinerary_generator.formatting import get_transport_description
 
 
