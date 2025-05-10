@@ -7,6 +7,7 @@ from Surmai trip.json exports using custom Jinja2 templates.
 """
 import argparse
 import os
+import logging
 import copy
 from zoneinfo import ZoneInfo
 

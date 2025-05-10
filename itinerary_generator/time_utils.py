@@ -70,27 +70,30 @@ def format_time(dt, include_ampm=True):
     return dt.strftime('%-H:%M')  # Use %-H for 24-hour format with no leading zero
 
 
-def convert_to_timezone(dt, timezone):
+def convert_to_timezone(dt, timezone_str_or_obj): # Renamed 'timezone' to avoid conflict
     """
     Convert a datetime to another timezone.
-    
+
     Args:
         dt (datetime): Datetime object to convert (will be made timezone-aware if not already)
-        timezone (str or ZoneInfo): Target timezone
-        
+        timezone_str_or_obj (str or ZoneInfo): Target timezone
+
     Returns:
         datetime: Datetime in the target timezone
     """
-    if isinstance(timezone, str):
-        timezone = ZoneInfo(timezone)
-    
+    target_tz = timezone_str_or_obj
+    if isinstance(timezone_str_or_obj, str):
+        target_tz = ZoneInfo(timezone_str_or_obj) # Uses the module-level ZoneInfo
+
     # If datetime is not timezone-aware, assume it's in Eastern Time
     if dt.tzinfo is None:
-        from zoneinfo import ZoneInfo
+        # Use the module-level ZoneInfo here too for consistency,
+        # though a specific ZoneInfo instance is created.
         et_tz = ZoneInfo("America/New_York")
         dt = dt.replace(tzinfo=et_tz)
-    
-    return dt.astimezone(timezone)
+
+    return dt.astimezone(target_tz)
+
 
 
 def calculate_timezone_difference(source_tz, target_tz, reference_date=None):

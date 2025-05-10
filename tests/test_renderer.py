@@ -1,4 +1,3 @@
-import sys
 import os
 import pytest
 import tempfile
@@ -97,6 +96,56 @@ def test_render_itinerary(sample_trip_data, sample_days):
             os.unlink(template_path)
         if os.path.exists(output_path):
             os.unlink(output_path)
+
+def test_render_itinerary_template_in_module_subdir(sample_trip_data, sample_days, monkeypatch):
+    """Test rendering when template is in a standard 'templates' subdirectory."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        module_dir = os.path.join(tmpdir, "itinerary_generator")
+        templates_subdir = os.path.join(module_dir, "templates")
+        os.makedirs(templates_subdir)
+
+        template_content = "{{ trip_name }} - Found in module subdir"
+        template_filename = "module_subdir_template.html"
+        actual_template_path = os.path.join(templates_subdir, template_filename)
+        
+        with open(actual_template_path, "w") as f:
+            f.write(template_content)
+
+        output_path = os.path.join(tmpdir, "output_module_subdir.html")
+        context = create_template_context(sample_trip_data, sample_days)
+
+        # Get a reference to the original os.path.dirname
+        original_dirname = os.path.dirname 
+
+        def mock_dirname(path_arg):
+            # If the path_arg is what __file__ would be for renderer.py, return our simulated module_dir
+            if isinstance(path_arg, str) and path_arg.endswith('renderer.py'):
+                return module_dir
+            # Otherwise, call the original os.path.dirname
+            return original_dirname(path_arg)
+
+        monkeypatch.setattr('itinerary_generator.renderer.os.path.dirname', mock_dirname)
+        
+        html_path_result = render_itinerary(template_filename, context, output_path)
+
+        assert os.path.exists(html_path_result)
+        with open(html_path_result, 'r') as f:
+            content_read = f.read()
+            assert "Test Trip - Found in module subdir" in content_read
+
+def test_render_itinerary_template_not_found(sample_trip_data, sample_days):
+    """Test rendering when the template file cannot be found."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_path = os.path.join(tmpdir, "output_not_found.html")
+        context = create_template_context(sample_trip_data, sample_days)
+        
+        non_existent_template = "this_template_does_not_exist.html"
+        
+        with pytest.raises(FileNotFoundError) as excinfo:
+            render_itinerary(non_existent_template, context, output_path)
+        
+        assert f"Template file '{non_existent_template}' not found" in str(excinfo.value)
+        assert "Searched in:" in str(excinfo.value) # Check for the helpful part of the message
 
 
 @patch("requests.post")
