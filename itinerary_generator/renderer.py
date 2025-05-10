@@ -38,7 +38,7 @@ def create_template_context(trip_data, days):
         destination = ", ".join(destination_parts)
     
     # Create the context dictionary with all variables needed by templates
-    return {
+    context = {
         "trip_name": trip["name"],  # Trip title/name
         "trip_destination": destination,  # Actual physical destination
         "start_date": start_date.strftime("%b %d, %Y") if start_date else "",
@@ -46,8 +46,11 @@ def create_template_context(trip_data, days):
         "days": days,
         "trip_notes": trip.get("notes", ""),
         "lodgings": trip_data.get("lodgings", []),
-        "transportations": trip_data.get("transportations", [])
+        "transportations": trip_data.get("transportations", []),
+        "timezone": "Local time at each location"  # Add this line - explanation of timezone
     }
+    
+    return context
 
 
 def render_itinerary(template_path, context, output_path):
