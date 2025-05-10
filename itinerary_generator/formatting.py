@@ -14,10 +14,14 @@ def insert_event(days, event_datetime, tz, label):
         tz (ZoneInfo): Target timezone for display
         label (str): Event label/description
     """
-    local_date = event_datetime.astimezone(tz).date()
+    # Convert the UTC datetime to the local timezone for proper day allocation
+    local_datetime = event_datetime.astimezone(tz)
+    local_date = local_datetime.date()
+    
     for day in days:
         if day["date"].date() == local_date:
-            day["events"].append((event_datetime.astimezone(tz).time(), label))
+            # Store the local time for display, not UTC time
+            day["events"].append((local_datetime.time(), label))
             break
 
 
@@ -48,7 +52,7 @@ def get_transport_icon(transport_type):
 
 def format_time(dt):
     """
-    Format a datetime in a Windows-compatible way with no leading zeros.
+    Format a datetime in a consistent way with no leading zeros.
     
     Args:
         dt (datetime): Datetime object to format
@@ -56,7 +60,8 @@ def format_time(dt):
     Returns:
         str: Formatted time string (e.g., "9:30 AM" instead of "09:30 AM")
     """
-    return dt.strftime('%I:%M %p').lstrip('0')
+    # Format the time without leading zeros on hour
+    return dt.strftime('%-I:%M %p') if dt.strftime('%p') else dt.strftime('%-H:%M')
 
 
 def format_lodging_events(days, lodgings, tz):
@@ -69,24 +74,32 @@ def format_lodging_events(days, lodgings, tz):
         tz (ZoneInfo): Target timezone for display
     """
     for lodging in lodgings:
+        # Parse the ISO timestamps to datetime objects (UTC)
         checkin = datetime.fromisoformat(lodging["startDate"].replace("Z", "+00:00"))
         checkout = datetime.fromisoformat(lodging["endDate"].replace("Z", "+00:00"))
         name = lodging["name"]
 
+        # Convert to local time for display
         checkin_local = checkin.astimezone(tz)
         checkout_local = checkout.astimezone(tz)
         
-        # Format times in a Windows-compatible way
+        # Format times for display
         checkin_time = format_time(checkin_local)
         checkout_time = format_time(checkout_local)
         
-        # Add check-in and check-out events
+        # Add check-in and check-out events using the original UTC times
+        # The insert_event function will convert them to local time
         insert_event(days, checkin, tz, f"🛏 {checkin_time} — Check-In at {name}")
         insert_event(days, checkout, tz, f"🛏 {checkout_time} — Check-Out from {name}")
 
         # Add lodging banners for nights at this lodging
+        # Convert to local dates for comparison
+        checkin_date = checkin.astimezone(tz).date()
+        checkout_date = checkout.astimezone(tz).date()
+        
         for day in days:
-            if checkin.date() <= day["date"].date() < checkout.date():
+            day_date = day["date"].date()
+            if checkin_date <= day_date < checkout_date:
                 day["lodging_banner"] = f"🏨 Lodging: Staying at {name}"
 
 
@@ -100,9 +113,11 @@ def format_transport_events(days, transportations, tz):
         tz (ZoneInfo): Target timezone for display
     """
     for transport in transportations:
+        # Parse the ISO timestamps to datetime objects (UTC)
         departure = datetime.fromisoformat(transport["departure"].replace("Z", "+00:00"))
         arrival = datetime.fromisoformat(transport["arrival"].replace("Z", "+00:00"))
         
+        # Convert to local time for display
         dep_local = departure.astimezone(tz)
         arr_local = arrival.astimezone(tz)
         
@@ -110,16 +125,18 @@ def format_transport_events(days, transportations, tz):
         
         # Add extra info for multi-day transportation
         extra = ""
-        if departure.date() != arrival.date():
-            # Format arrival time in a Windows-compatible way
+        if dep_local.date() != arr_local.date():
+            # Format arrival time in local time
             arr_time = format_time(arr_local)
             arr_date = arr_local.strftime('%b %d')
             extra = f"(arrives {arr_time}, {arr_date} — local time)"
         
-        # Format departure time in a Windows-compatible way
+        # Format departure time in local time
         dep_time = format_time(dep_local)
         label = f"{icon} {dep_time} — {transport['type'].title()} from {transport['origin']} to {transport['destination']} {extra}"
         
+        # Insert the event using original UTC time
+        # The insert_event function will handle timezone conversion
         insert_event(days, departure, tz, label)
 
 
@@ -136,19 +153,24 @@ def format_activity_events(days, activities, tz):
         if not activity or not activity.get("startDate"):
             continue  # skip if malformed
             
+        # Parse the ISO timestamp to datetime object (UTC)
         start_time = datetime.fromisoformat(activity["startDate"].replace("Z", "+00:00"))
         name = activity.get("name", "Unnamed Activity")
         address = activity.get("address", "")
         
         icon = "🎟️"
         
-        # Format time in a Windows-compatible way
-        local_time = format_time(start_time.astimezone(tz))
-        label = f"{icon} {local_time} — {name}"
+        # Convert to local time for display
+        local_datetime = start_time.astimezone(tz)
+        local_time_str = format_time(local_datetime)
+        
+        label = f"{icon} {local_time_str} — {name}"
         
         if address and address.lower() != "n/a" and address.strip():
             label += f" @ {address}"
             
+        # Insert the event using original UTC time
+        # The insert_event function will handle timezone conversion
         insert_event(days, start_time, tz, label)
 
 
