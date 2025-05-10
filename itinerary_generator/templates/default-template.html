@@ -21,7 +21,10 @@
           <span>Start Date: {{ start_date }}</span>
           <span>End Date: {{ end_date }}</span>
         </h5>
-        <h5 class="card-subtitle">Destination: {{ trip_name }}</h5>
+        <h5 class="card-subtitle">Trip: {{ trip_name }}</h5>
+        {% if trip_destination %}
+        <h6 class="card-subtitle mt-2">Destination: {{ trip_destination }}</h6>
+        {% endif %}
       </div>
     </div>
 
