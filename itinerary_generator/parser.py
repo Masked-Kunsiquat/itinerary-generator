@@ -65,6 +65,9 @@ def parse_dates(trip):
         ValueError: If dates are in an invalid format
     """
     try:
+        # Convert ISO format strings to datetime objects
+        # When the 'Z' is present, it denotes UTC time
+        # Replace with +00:00 to make it timezone-aware
         start = datetime.fromisoformat(trip["startDate"].replace("Z", "+00:00"))
         end = datetime.fromisoformat(trip["endDate"].replace("Z", "+00:00"))
         return start, end
