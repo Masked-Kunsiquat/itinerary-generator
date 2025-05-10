@@ -45,7 +45,8 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         # Extract key trip information
         trip = trip_data["trip"]
         start_date, end_date = parse_dates(trip)
-        tz = ZoneInfo(get_trip_timezone(trip))
+        timezone_str = get_trip_timezone(trip)
+        tz = ZoneInfo(timezone_str)
         
         # Build day structures
         days = build_days(start_date, end_date)
@@ -100,15 +101,18 @@ def main():
     
     args = parser.parse_args()
     
-    generate_itinerary(
+    html_path, pdf_path = generate_itinerary(
         json_path=args.json_path,
         template_path=args.template_path,
         output_html=args.output_html,
         pdf_path=args.pdf,
         gotenberg_url=args.gotenberg_url
     )
+    
+    print(f"HTML itinerary generated: {html_path}")
+    if pdf_path:
+        print(f"PDF itinerary generated: {pdf_path}")
 
 
 if __name__ == "__main__":
     main()
-    

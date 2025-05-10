@@ -18,9 +18,12 @@ def create_template_context(trip_data, days):
         dict: Template context dictionary with all variables needed by templates
     """
     trip = trip_data["trip"]
+    
+    # Get the start and end dates from the days list, if available
     start_date = days[0]["date"] if days else None
     end_date = days[-1]["date"] if days else None
     
+    # Create the context dictionary with all variables needed by templates
     return {
         "trip_name": trip["name"],
         "start_date": start_date.strftime("%b %d, %Y") if start_date else "",
