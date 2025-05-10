@@ -48,10 +48,11 @@ def generate_itinerary(json_path, template_path, output_html, pdf_path=None, got
         trip = trip_data["trip"]
         start_date, end_date = parse_dates(trip)
         
-        # Get the appropriate timezone using the new priority system
+        # Get the destination timezone from trip data
         dest_timezone_str = get_trip_timezone(trip)
         
-        # User timezone gets priority if specified
+        # For travel itineraries, the default should usually be the destination's timezone
+        # unless the user explicitly requests a different timezone
         display_timezone_str = user_timezone or dest_timezone_str
         
         # Create timezone objects
@@ -117,7 +118,7 @@ def main():
     )
     parser.add_argument(
         "--timezone",
-        help="Timezone to use for displaying times (e.g., America/New_York)"
+        help="Timezone to use for displaying times (e.g., America/New_York, Europe/London)"
     )
     
     args = parser.parse_args()

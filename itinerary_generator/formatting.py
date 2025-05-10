@@ -182,18 +182,24 @@ def format_transport_events(days, transportations, tz):
         dep_local = convert_to_timezone(departure, tz)
         arr_local = convert_to_timezone(arrival, tz)
         
+        # Get the icon for this transport type
         icon = get_transport_icon(transport["type"])
         
         # Get human-readable description
         description = get_transport_description(transport)
         
-        # Add extra info for multi-day transportation
+        # Add extra info for multi-day transportation or cross-timezone travel
         extra = ""
-        if dep_local.date() != arr_local.date():
+        # Always show arrival info for international/cross-timezone travel
+        if dep_local.date() != arr_local.date() or transport["type"] in ["flight", "train"]:
             # Format arrival time in local time
             arr_time = format_time(arr_local)
-            arr_date = arr_local.strftime('%b %d')
-            extra = f" (arrives {arr_time}, {arr_date} — local time)"
+            # If different day, include the date too
+            if dep_local.date() != arr_local.date():
+                arr_date = arr_local.strftime('%b %-d')
+                extra = f" (arrives {arr_time}, {arr_date} — local time)"
+            else:
+                extra = f" (arrives {arr_time} — local time)"
         
         # Format departure time in local time
         dep_time = format_time(dep_local)

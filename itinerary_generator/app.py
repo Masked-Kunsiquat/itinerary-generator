@@ -4,10 +4,11 @@ import os
 import tempfile
 import logging
 import traceback
+import json
 
 # Import our main generator function instead of using CLI simulation
 from itinerary_generator.generate_itinerary import generate_itinerary
-from itinerary_generator.parser import get_common_timezones
+from itinerary_generator.parser import get_common_timezones, get_trip_timezone, load_trip_data
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
@@ -20,6 +21,9 @@ def upload_files():
         template_file = request.files.get('template_html')
         generate_pdf = request.form.get('generate_pdf') == 'on'
         user_timezone = request.form.get('timezone')
+        
+        if not user_timezone or user_timezone == 'auto':
+            user_timezone = None  # Let the system auto-detect from trip data
 
         if not trip_file:
             return "Missing trip.json file", 400
@@ -71,9 +75,12 @@ def upload_files():
             logging.error("Itinerary generation failed:\n%s", traceback.format_exc())
             return "An internal error occurred while generating the itinerary.", 500
 
+    # For GET requests, try to auto-detect destination timezone from the trip
+    detected_timezone = None
+    
     # Get list of common timezones for the dropdown
     timezones = get_common_timezones()
-    return render_template('form.html', timezones=timezones)
+    return render_template('form.html', timezones=timezones, detected_timezone=detected_timezone)
 
 if __name__ == '__main__':
     # Use environment variable to control debug mode, default to False for security

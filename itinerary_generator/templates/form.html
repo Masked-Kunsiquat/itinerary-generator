@@ -37,12 +37,12 @@
 
       <div class="mb-3">
         <label for="timezone" class="form-label d-flex align-items-center">
-          Timezone
+          Timezone for Event Times
           <span 
             class="ms-2 text-muted" 
             data-bs-toggle="tooltip" 
             data-bs-placement="top" 
-            title="Select the timezone you want to use for displaying times in your itinerary.">
+            title="Select how you want times to be displayed in your itinerary. Recommended: use destination timezone for trip planning.">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
               <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8z"/>
               <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 .875-.252 1.02-.598l.088-.416c.066-.3.118-.428.288-.47l.451-.083.082-.38-1.837-.287.738-3.468z"/>
@@ -51,12 +51,14 @@
           </span>
         </label>
         <select class="form-select" name="timezone" id="timezone">
-          <option value="">Auto-detect from trip data or use system default</option>
-          {% for tz in timezones %}
-          <option value="{{ tz }}">{{ tz }}</option>
-          {% endfor %}
+          <option value="auto">Auto-detect from trip destination (recommended)</option>
+          <optgroup label="Common Timezones">
+            {% for tz in timezones %}
+            <option value="{{ tz }}" {% if detected_timezone == tz %}selected{% endif %}>{{ tz }}</option>
+            {% endfor %}
+          </optgroup>
         </select>
-        <div class="form-text">Select your preferred timezone for displaying event times in the itinerary.</div>
+        <div class="form-text">For travel itineraries, using the destination's timezone is usually best. Select your home timezone if you prefer to see times in your local time.</div>
       </div>
 
       <div class="form-check mb-3">

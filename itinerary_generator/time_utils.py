@@ -66,8 +66,8 @@ def format_time(dt, include_ampm=True):
         str: Formatted time string (e.g., "9:30 AM" instead of "09:30 AM")
     """
     if include_ampm:
-        return dt.strftime('%-I:%M %p')
-    return dt.strftime('%-H:%M')
+        return dt.strftime('%-I:%M %p')  # Use %-I for no leading zero in hour
+    return dt.strftime('%-H:%M')  # Use %-H for 24-hour format with no leading zero
 
 
 def convert_to_timezone(dt, timezone):
@@ -91,13 +91,15 @@ def convert_to_timezone(dt, timezone):
     return dt.astimezone(timezone)
 
 
-def calculate_timezone_difference(source_tz, target_tz):
+def calculate_timezone_difference(source_tz, target_tz, reference_date=None):
     """
     Calculate the hour difference between two timezones.
+    Takes into account daylight saving time for the specific reference date.
     
     Args:
         source_tz (str or ZoneInfo): Source timezone
         target_tz (str or ZoneInfo): Target timezone
+        reference_date (datetime, optional): Reference date for DST calculation
         
     Returns:
         float: Hour difference (positive if target is ahead, negative if behind)
@@ -108,8 +110,16 @@ def calculate_timezone_difference(source_tz, target_tz):
     if isinstance(target_tz, str):
         target_tz = ZoneInfo(target_tz)
     
-    # Use current datetime for the calculation
-    now = datetime.now(ZoneInfo("UTC"))
+    # Use reference date if provided, otherwise current datetime
+    if reference_date is None:
+        now = datetime.now(ZoneInfo("UTC"))
+    else:
+        # Make sure reference_date is timezone-aware
+        if reference_date.tzinfo is None:
+            now = reference_date.replace(tzinfo=ZoneInfo("UTC"))
+        else:
+            now = reference_date
+    
     time_source = now.astimezone(source_tz)
     time_target = now.astimezone(target_tz)
     
