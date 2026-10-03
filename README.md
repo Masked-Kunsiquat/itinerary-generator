@@ -1,5 +1,7 @@
 # 🧳 Surmai Itinerary Generator
 
+> ⚠️ **No longer maintained.** [Surmai](https://github.com/rohitkumbhar/surmai) now generates PDF itineraries natively (since [#245](https://github.com/rohitkumbhar/surmai/pull/245), Dec 2025), which covers what this tool was built for. This repository is archived and kept for reference.
+
 A web-based tool for rendering beautiful, print-ready trip itineraries from Surmai's `trip.json` exports using customizable Jinja2 + Bootstrap 5 templates. Supports optional PDF generation via [Gotenberg](https://github.com/gotenberg/gotenberg).
 
 ![CI](https://github.com/Masked-Kunsiquat/itinerary-generator/actions/workflows/test.yml/badge.svg)
